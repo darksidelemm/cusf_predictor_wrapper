@@ -15,7 +15,7 @@ $ make
 
 The `pred` binary then needs to be copied somewhere useful, ideally the same directory as `Predictor.py`, i.e.
 ```
-cp pred ../../
+$ cp pred ../../
 ```
 
 ## 2. Dependencies
@@ -59,7 +59,8 @@ Area of interest:
 The higher resolution wind model you choose, the larger the amount of data to download, and the longer it will take. It also increases the prediction calculation time (though not significantly).
 
 `wind_grabber.sh` is an example script to automatically grab wind data first to a temporary directory, and then to the final gfs directory. This could be run from a cronjob to keep the wind data up-to-date.
-New wind models become available approximately every 6 hours, approximately 4 hours after the model's nominal time (i.e. the 00Z model becomes availble aroudn 04Z). Information on the status of the GFS model generation is available here: http://www.nco.ncep.noaa.gov/pmb/nwprod/prodstat_new/
+
+New wind models become available approximately every 6 hours, approximately 4 hours after the model's nominal time (i.e. the 00Z model becomes available around 04Z). Information on the status of the GFS model generation is available here: http://www.nco.ncep.noaa.gov/pmb/nwprod/prodstat_new/
 
 ## 3. Using the Predictor
 
