@@ -11,7 +11,6 @@ import os
 import time
 import datetime
 import logging
-from dateutil import tz
 
 class Predictor:
     ''' CUSF Standalone Predictor Wrapper '''
@@ -50,8 +49,8 @@ class Predictor:
             launch_lon = 138.5194,
             launch_alt = 0,
             ascent_rate = 5.0,
-            descent_rate = 5.0,
-            burst_alt = 28000,
+            descent_rate = 8.0,
+            burst_alt = 26000,
             launch_time = datetime.datetime.utcnow(),
             descent_mode = False):
 
