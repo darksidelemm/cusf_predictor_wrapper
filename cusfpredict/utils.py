@@ -36,6 +36,26 @@ def available_gfs(gfs_path='./gfs'):
     return (start_time, end_time)
 
 
+def gfs_model_age(gfs_path="./gfs"):
+    """ Reads the model URL in from the dataset.txt file written by get_wind_data.py """
+
+    dataset_file = os.path.join(gfs_path,"dataset.txt")
+
+    try:
+        _f = open(dataset_file,'r')
+        dataset_url = _f.read()
+        _f.close()
+
+        dataset_date = dataset_url.split('/')[5]
+        dataset_hour = dataset_url.split('/')[6].split('_')[3]
+
+        return "%s-%s" % (dataset_date, dataset_hour)
+    except:
+        return "Unknown"
+
+
+
+
 # Geometry and KML related stuff
 ns = '{http://www.opengis.net/kml/2.2}'
 
@@ -118,13 +138,13 @@ def flight_path_landing_placemark(flight_path,
 
 def write_flight_path_kml(flight_data,
                         filename="prediction.kml",
-                        name="HAB Prediction"):
+                        comment="HAB Prediction"):
     """ Write out flight path geometry objects to a kml file. """
 
     kml_root = fastkml.kml.KML()
     kml_doc = fastkml.kml.Document(
         ns=ns,
-        name=name)
+        name=comment)
 
     if type(flight_data) is not list:
         flight_data = [flight_data]

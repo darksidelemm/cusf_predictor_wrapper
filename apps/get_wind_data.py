@@ -151,8 +151,9 @@ def main():
     time_to_find = datetime.datetime.utcfromtimestamp(timestamp_to_find)
 
     log.info('Looking for latest dataset which covers %s' % time_to_find.ctime())
+    dataset_log_output = os.path.join(options.output,'dataset.txt')
     try:
-        dataset = dataset_for_time(time_to_find, resolution_to_find)
+        dataset = dataset_for_time(time_to_find, resolution_to_find, log_output=dataset_log_output)
     except: 
         print('Could not locate a dataset for the requested time.')
         sys.exit(1)
@@ -421,7 +422,7 @@ def possible_urls(time, resolution='0p50'):
     
     return possible_urls
 
-def dataset_for_time(time, resolution='0p50'):
+def dataset_for_time(time, resolution='0p50', log_output=None):
     """
     Given a datetime object, attempt to find the latest dataset which covers that 
     time and return pydap dataset object for it.
@@ -447,6 +448,11 @@ def dataset_for_time(time, resolution='0p50'):
 
             if start_time <= time and end_time >= time:
                 log.info('Found good dataset at %s.' % url)
+                # Write out the dataset URL to a text file if we have been prompted.
+                if log_output is not None:
+                    _f = open(log_output,'w')
+                    _f.write(url)
+                    _f.close()
                 return dataset
         except pydap.exceptions.ServerError:
             # Skip server error.

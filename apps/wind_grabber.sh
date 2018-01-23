@@ -17,5 +17,7 @@ python get_wind_data.py --lat=-33 --lon=139 --latdelta=10 --londelta=10 -v -f 24
 
 # Clear out data in gfs directory, and copy new data in.
 rm gfs/*.dat
+rm gfs/dataset.txt
 cp gfs_temp/*.dat gfs/
+cp gfs_temp/dataset.txt gfs/
 
