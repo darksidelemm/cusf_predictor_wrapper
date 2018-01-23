@@ -39,7 +39,7 @@ def available_gfs(gfs_path='./gfs'):
 # Geometry and KML related stuff
 ns = '{http://www.opengis.net/kml/2.2}'
 
-def flight_path_to_geometry(flight_path):
+def flight_path_to_linestring(flight_path):
     ''' Convert a predicted flight path to a LineString geometry object '''
 
     track_points = []
@@ -50,7 +50,7 @@ def flight_path_to_geometry(flight_path):
     return LineString(track_points)
 
 
-def flight_path_kml(flight_path,
+def flight_path_to_geometry(flight_path,
     name="Flight Path",
     comment="Predicted Flight Path Data",
     track_color="ffff8000",
@@ -79,9 +79,59 @@ def flight_path_kml(flight_path,
 
     flight_line.geometry = fastkml.geometry.Geometry(
         ns=ns,
-        geometry=flight_path_to_geometry(flight_path),
+        geometry=flight_path_to_linestring(flight_path),
         altitude_mode='absolute',
         extrude=True,
         tessellate=True)
 
     return flight_line
+
+
+def flight_path_landing_placemark(flight_path,
+    name="Flight Path",
+    comment="Landing"):
+    """ Produce a placemark of the landing position of a flight """
+
+    flight_icon_style = fastkml.styles.IconStyle(
+        ns=ns, 
+        icon_href="http://maps.google.com/mapfiles/kml/shapes/target.png", 
+        scale=2.0)
+
+    flight_style = fastkml.styles.Style(
+        ns=ns,
+        styles=[flight_icon_style])
+
+    flight_placemark = fastkml.kml.Placemark(
+        ns=ns, 
+        id=name,
+        name=comment,
+        description="",
+        styles=[flight_style])
+
+    flight_placemark.geometry = fastkml.geometry.Geometry(
+        ns=ns,
+        geometry=Point(flight_path[-1][2], flight_path[-1][1], flight_path[-1][3]),
+        altitude_mode='clampToGround')
+
+    return flight_placemark
+
+
+def write_flight_path_kml(flight_data,
+                        filename="prediction.kml",
+                        name="HAB Prediction"):
+    """ Write out flight path geometry objects to a kml file. """
+
+    kml_root = fastkml.kml.KML()
+    kml_doc = fastkml.kml.Document(
+        ns=ns,
+        name=name)
+
+    if type(flight_data) is not list:
+        flight_data = [flight_data]
+
+    for _flight in flight_data:
+        kml_doc.append(_flight)
+
+    with open(filename,'w') as kml_file:
+        kml_file.write(kml_doc.to_string())
+        kml_file.close()
