@@ -196,7 +196,7 @@ int get_wind(wind_file_cache_t* cache, float lat, float lng, float alt, long int
             &(found_entries[0]), &(found_entries[1]));
 
     if(!found_entries[0] || !found_entries[1]) {
-        fprintf(stderr, "ERROR: Do not have wind data for this (lat, lon, alt, time).\n");
+        fprintf(stderr, "ERROR: Do not have wind data for this (lat, lon, alt, time) (%.4f,%.4f,%.1f,%d).\n",lat,lng,alt,timestamp);
         return 0;
     }
 

@@ -27,7 +27,7 @@ class Predictor:
             raise Exception("GFS data directory does not exist.")
 
         # Check the gfs directory contains some gfs data files.
-        gfs_list = glob.glob(gfs_path + "/" + "gfs_*.dat")
+        gfs_list = glob.glob(os.path.join(gfs_path, "gfs_*.dat"))
         if len(gfs_list) == 0:
             raise Exception("No GFS data files in directory.")
 
