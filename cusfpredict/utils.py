@@ -75,7 +75,8 @@ def flight_path_to_geometry(flight_path,
     comment="Predicted Flight Path Data",
     track_color="ffff8000",
     poly_color="20000000",
-    track_width=3.0):
+    track_width=3.0,
+    altitude_mode = 'absolute'):
     ''' Produce a fastkml geometry object from a flight path array '''
 
     flight_track_line_style = fastkml.styles.LineStyle(
@@ -100,7 +101,7 @@ def flight_path_to_geometry(flight_path,
     flight_line.geometry = fastkml.geometry.Geometry(
         ns=ns,
         geometry=flight_path_to_linestring(flight_path),
-        altitude_mode='absolute',
+        altitude_mode=altitude_mode,
         extrude=True,
         tessellate=True)
 
@@ -114,7 +115,7 @@ def flight_path_landing_placemark(flight_path,
 
     flight_icon_style = fastkml.styles.IconStyle(
         ns=ns, 
-        icon_href="http://maps.google.com/mapfiles/kml/shapes/target.png", 
+        icon_href="http://maps.google.com/mapfiles/kml/shapes/cross-hairs.png", 
         scale=2.0)
 
     flight_style = fastkml.styles.Style(
@@ -132,6 +133,45 @@ def flight_path_landing_placemark(flight_path,
         ns=ns,
         geometry=Point(flight_path[-1][2], flight_path[-1][1], flight_path[-1][3]),
         altitude_mode='clampToGround')
+
+    return flight_placemark
+
+
+def flight_path_burst_placemark(flight_path,
+    name="Flight Path",
+    comment="Burst",
+    altitude_mode = 'absolute'):
+    """ Produce a placemark of the burst position of a flight """
+
+    flight_icon_style = fastkml.styles.IconStyle(
+        ns=ns, 
+        icon_href="http://maps.google.com/mapfiles/kml/shapes/star.png", 
+        scale=2.0)
+
+    flight_style = fastkml.styles.Style(
+        ns=ns,
+        styles=[flight_icon_style])
+
+    flight_placemark = fastkml.kml.Placemark(
+        ns=ns, 
+        id=name,
+        name=comment,
+        description="",
+        styles=[flight_style])
+
+    # Read through array and hunt for max altitude point.
+    current_alt = 0.0
+    current_index = 0
+    for i in range(len(flight_path)):
+        if flight_path[i][3] > current_alt:
+            current_alt = flight_path[i][3]
+            current_index = i
+
+
+    flight_placemark.geometry = fastkml.geometry.Geometry(
+        ns=ns,
+        geometry=Point(flight_path[current_index][2], flight_path[current_index][1], flight_path[current_index][3]),
+        altitude_mode=altitude_mode)
 
     return flight_placemark
 
