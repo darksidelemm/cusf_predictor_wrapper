@@ -83,7 +83,7 @@ for _delta_alt in burst_alt_variations:
 		pred_comment = "%s %.1f/%.1f/%.1f" % (_launch_time.isoformat(), ASCENT_RATE, _burst_alt, DESCENT_RATE)
 
 		predictions.append(flight_path_to_geometry(flight_path, comment=pred_comment, altitude_mode=altitude_mode))
-		predictions.append(flight_path_burst_placemark(flight_path, comment="Burst", altitude_mode=altitude_mode))
+		predictions.append(flight_path_burst_placemark(flight_path, comment="Burst (%dm)"%_burst_alt, altitude_mode=altitude_mode))
 		predictions.append(flight_path_landing_placemark(flight_path, comment=pred_comment))
 
 		print("%s - Landing: %.4f, %.4f at %s" % (pred_comment, flight_path[-1][1], flight_path[-1][2], datetime.datetime.utcfromtimestamp(flight_path[-1][0]).isoformat()))
