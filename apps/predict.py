@@ -30,14 +30,14 @@ BURST_ALT = 30000.0
 
 # Read in command line arguments.
 parser = argparse.ArgumentParser()
-parser.add_argument('-a', '--ascentrate', type=float, default=ASCENT_RATE, help="Ascent Rate (m/s)")
-parser.add_argument('-d', '--descentrate', type=float, default=DESCENT_RATE, help="Descent Rate (m/s)")
-parser.add_argument('-b', '--burstalt', type=float, default=BURST_ALT, help="Burst Altitude (m)")
-parser.add_argument('--launchalt', type=float, default=LAUNCH_ALT, help="Launch Altitude (m)")
+parser.add_argument('-a', '--ascentrate', type=float, default=ASCENT_RATE, help="Ascent Rate (m/s). Default 5m/s")
+parser.add_argument('-d', '--descentrate', type=float, default=DESCENT_RATE, help="Descent Rate (m/s). Default 5m/s")
+parser.add_argument('-b', '--burstalt', type=float, default=BURST_ALT, help="Burst Altitude (m). Default 30000m")
+parser.add_argument('--launchalt', type=float, default=LAUNCH_ALT, help="Launch Altitude (m). Default 0m")
 parser.add_argument('--latitude', type=float, default=LAUNCH_LAT, help="Launch Latitude (dd.dddd)")
 parser.add_argument('--longitude', type=float, default=LAUNCH_LON, help="Launch Longitude (dd.dddd)")
-parser.add_argument('--time', type=str, default=LAUNCH_TIME, help="Launch Time (string, UTC)")
-parser.add_argument('-o', '--output', type=str, default='prediction.kml', help="Output KML File")
+parser.add_argument('--time', type=str, default=LAUNCH_TIME, help="Launch Time (string, UTC). Default = Now")
+parser.add_argument('-o', '--output', type=str, default='prediction.kml', help="Output KML File. Default = prediction.kml")
 parser.add_argument('--altitude_deltas', type=str, default='0', help="Comma-delimited list of altitude deltas. (metres).")
 parser.add_argument('--time_deltas', type=str, default='0', help="Comma-delimited list of time deltas. (hours)")
 parser.add_argument('--absolute', action="store_true", default=False, help="Show absolute altitudes for tracks and placemarks.")
@@ -81,20 +81,13 @@ for _delta_alt in burst_alt_variations:
 			continue
 
 		pred_comment = "%s %.1f/%.1f/%.1f" % (_launch_time.isoformat(), ASCENT_RATE, _burst_alt, DESCENT_RATE)
-		print(pred_comment)
 
 		predictions.append(flight_path_to_geometry(flight_path, comment=pred_comment, altitude_mode=altitude_mode))
 		predictions.append(flight_path_burst_placemark(flight_path, comment="Burst", altitude_mode=altitude_mode))
 		predictions.append(flight_path_landing_placemark(flight_path, comment=pred_comment))
 
+		print("%s - Landing: %.4f, %.4f at %s" % (pred_comment, flight_path[-1][1], flight_path[-1][2], datetime.datetime.utcfromtimestamp(flight_path[-1][0]).isoformat()))
+
 write_flight_path_kml(predictions, filename=args.output)
+print("KML written to %s" % args.output)
 
-# Launch time:
-launch_position = flight_path[0]
-print("Launch Time: %s" % datetime.datetime.utcfromtimestamp(launch_position[0]).isoformat())
-print("Launch Location: %.4f, %.4f" % (launch_position[1],launch_position[2]))
-
-# Landing position
-landing_position = flight_path[-1]
-print("Landing Time: %s" % datetime.datetime.utcfromtimestamp(landing_position[0]).isoformat())
-print("Landing Location: %.4f, %.4f" % (landing_position[1],landing_position[2]))

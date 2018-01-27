@@ -97,16 +97,48 @@ The output is a list-of-lists, containing entries of [utctimestamp, lat, lon, al
 [[1516702953, -34.9471, 138.517, 250.0], [1516703003, -34.9436, 138.514, 500.0], <etc>, [1516703053, -34.9415, 138.513, 750.0]]
 ```
 
-The list-of-lists can be converted to a LineString geometry object using:
+There is also a command-line utility, `predict.py`, which allows performing predictions with launch parameter variations:
 ```
->>> from cusfpredict.utils import *
->>> linestring = flight_path_to_linestring(flight_path)
->>> linestring
-<shapely.geometry.linestring.LineString object at 0x107106ad0>
+usage: predict.py [-h] [-a ASCENTRATE] [-d DESCENTRATE] [-b BURSTALT]
+                  [--launchalt LAUNCHALT] [--latitude LATITUDE]
+                  [--longitude LONGITUDE] [--time TIME] [-o OUTPUT]
+                  [--altitude_deltas ALTITUDE_DELTAS]
+                  [--time_deltas TIME_DELTAS] [--absolute]
 
+optional arguments:
+  -h, --help            show this help message and exit
+  -a ASCENTRATE, --ascentrate ASCENTRATE
+                        Ascent Rate (m/s). Default 5m/s
+  -d DESCENTRATE, --descentrate DESCENTRATE
+                        Descent Rate (m/s). Default 5m/s
+  -b BURSTALT, --burstalt BURSTALT
+                        Burst Altitude (m). Default 30000m
+  --launchalt LAUNCHALT
+                        Launch Altitude (m). Default 0m
+  --latitude LATITUDE   Launch Latitude (dd.dddd)
+  --longitude LONGITUDE
+                        Launch Longitude (dd.dddd)
+  --time TIME           Launch Time (string, UTC). Default = Now
+  -o OUTPUT, --output OUTPUT
+                        Output KML File. Default = prediction.kml
+  --altitude_deltas ALTITUDE_DELTAS
+                        Comma-delimited list of altitude deltas. (metres).
+  --time_deltas TIME_DELTAS
+                        Comma-delimited list of time deltas. (hours)
+  --absolute            Show absolute altitudes for tracks and placemarks.
 ```
 
-A few example scripts are located in the 'apps' directory:
+For example, to predict a radiosonde launch from Adelaide Airport (5m/s ascent, 26km burst, 7.5m/s descent), but to look at what happens if the burst altitude is higher or lower than usual:
+```
+$ python predict.py --latitude=-34.9499 --longitude=138.5194 -a 5 -d 7.5 -b 26000 --time "2018-01-27 11:15Z" --altitude_deltas="-2000,0,2000"
+Running using GFS Model: gfs20180127-00z
+2018-01-27T11:15:00+00:00 5.0/24000.0/7.5 - Landing: -34.8585, 138.9600 at 2018-01-27T13:03:33
+2018-01-27T11:15:00+00:00 5.0/26000.0/7.5 - Landing: -34.8587, 138.8870 at 2018-01-27T13:11:01
+2018-01-27T11:15:00+00:00 5.0/28000.0/7.5 - Landing: -34.8598, 138.7990 at 2018-01-27T13:18:22
+KML written to prediction.kml
+```
+
+A few other example scripts are located in the 'apps' directory:
  * basic_usage.py - Example showing how to write a predicted flight path out to a KML file
  * sonde_predict.py - A more complex example, where predictions for the next week's of radiosonde flights are run and written to a KML file.
 
