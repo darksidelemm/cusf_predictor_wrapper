@@ -8,11 +8,14 @@
 #
 import pygrib
 import sys
+import os.path
+import traceback
 import requests
 import argparse
 import logging
 import datetime
 import numpy as np
+from osgeo import gdal
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
@@ -99,7 +102,7 @@ def download_grib(url, params, filename="temp.grib"):
 
 	if _r.status_code == requests.codes.ok:
 		# Writeout to disk.
-		f = open(filename, 'w')
+		f = open(filename, 'wb')
 		f.write(_r.content)
 		f.close()
 		return True
@@ -139,6 +142,169 @@ def determine_latest_available_dataset(model='0p25_1hr',
 
 
 
+def parse_grib_to_dict(gribfile):
+	''' Parse a GRIB file into a python dictionary format '''
+
+	_grib = gdal.Open(gribfile)
+
+	output = {}
+
+	try:
+		# Extract coordinate extents from the GRIB
+		_grib_geotransform = _grib.GetGeoTransform()
+		_grib_Xres = _grib_geotransform[1]
+		_grib_Xsize = _grib.RasterXSize
+		_grib_Yres = _grib_geotransform[5]
+		_grib_Ysize = _grib.RasterYSize
+		_grib_topLeftX = _grib_geotransform[0]+_grib_Xres/2.0
+		_grib_topLeftY = _grib_geotransform[3]+_grib_Yres/2.0
+		_grib_topRightX = _grib_topLeftX + _grib_Xsize*_grib_Xres
+		_grib_bottomLeftY = _grib_topLeftY + _grib_Ysize*_grib_Yres
+		# Generate arrays containing the lat/lon scales
+		_grib_Xscale = np.arange(_grib_topLeftX, _grib_topRightX, _grib_Xres)
+		_grib_Yscale = np.arange(_grib_topLeftY, _grib_bottomLeftY, _grib_Yres)
+
+		# Copy the variables we will need later to the output dictionary
+		output['lon_scale'] = _grib_Xscale
+		output['lat_scale'] = _grib_Yscale
+		output['lon_centre'] = _grib_Xscale[_grib_Xsize//2]
+		output['lat_centre'] = _grib_Yscale[_grib_Ysize//2]
+		output['lon_radius'] = (max(_grib_Xscale) - min(_grib_Xscale))/2.0
+		output['lat_radius'] = (max(_grib_Yscale) - min(_grib_Yscale))/2.0
+
+	except:
+		traceback.print_exc()
+		return None
+
+	# Iterate over all the rasters (GRIB messages) within the file, and 
+	# if they contain data we need, copy the data into the output dictionary.
+	for _n in range(1,_grib.RasterCount+1):
+		try:
+			_band = _grib.GetRasterBand(_n)
+			_metadata = _band.GetMetadata()
+
+			_level = _metadata['GRIB_SHORT_NAME']
+			_level_int = int(_level.split('-')[0])//100
+
+
+			if _level_int not in output.keys():
+				output[_level_int] = {}
+
+			_variable = _metadata['GRIB_ELEMENT']
+			#print(_variable)
+			#print(GFS_PARAMS)
+
+			if _variable in GFS_PARAMS:
+				output[_level_int][_variable] = _band.ReadAsArray()
+				#print("Level: %d, Variable: %s" % (_level_int, _variable))
+
+				_valid_time = int(_metadata['GRIB_VALID_TIME'].split('sec')[0].strip())
+				output['valid_time'] = _valid_time
+
+		except:
+			traceback.print_exc()
+			continue
+
+	return output
+
+
+
+def wind_dict_to_cusf(data, output_dir='./gfs/'):
+	''' 
+	Export wind data to a cusf-standalone-predictor compatible file
+	Note that the file-naming scheme is fixed, so only the output directory is user-selectable.
+	'''
+
+
+	# Generate Output Filename: i.e. gfs_1506052799_-33.0_139.0_10.0_10.0.dat
+	_output_filename = "gfs_%d_%.1f_%.1f_%.1f_%.1f.dat" % (
+						data['valid_time'],
+						data['lat_centre'],
+						data['lon_centre'],
+						data['lat_radius'],
+						data['lon_radius']
+						)
+	_output_filename = os.path.join(output_dir, _output_filename)
+
+	output_text = ""
+
+	# Get the list of pressures. This is essentially all the integer keys in the data dictionary.
+	_pressures = []
+	for _key in data.keys():
+		if type(_key) == int:
+			_pressures.append(_key)
+
+	# Sort the list of pressures from highest to lowest
+	_pressures = np.flip(np.sort(_pressures),0)
+
+
+	# Build up the output file, section by section.
+
+	# HEADER Block
+	# Window coverage area, and timestamp
+	output_text += "# window centre latitude, window latitude radius, window centre longitude, window longitude radius, POSIX timestamp\n"
+	output_text += "%.1f,%.1f,%.1f,%.1f,%d\n" % (
+					data['lat_centre'],
+					data['lat_radius'],
+					data['lon_centre'],
+					data['lon_radius'],
+					data['valid_time'])
+
+	# Number of axes in dataset - always 3 - pressure, latitude, longitude
+	output_text += "# Number of axes\n3\n"
+
+	# First Axis definition - Pressure
+	output_text += "# axis 1: pressures\n"
+	# Size of Axis
+	output_text += "%d\n" % len(_pressures)
+	# Values
+	output_text += ",".join(["%.1f" % num for num in _pressures.tolist()]) + "\n"
+
+	# Second Axis Definition - Latitude
+	output_text += "# axis 2: latitudes\n"
+	# Size of Axis
+	output_text += "%d\n" % len(data['lat_scale'])
+	# Values
+	output_text += ",".join(["%.1f" % num for num in data['lat_scale']]) + "\n"
+
+	# Third Axis Definition - Longitude
+	output_text += "# axis 3: longitudes\n"
+	# Size of Axis
+	output_text += "%d\n" % len(data['lon_scale'])
+	# Values
+	output_text += ",".join(["%.1f" % num for num in data['lon_scale']]) + "\n"
+
+	# DATA BLOCK
+	# Number of lines of data
+	output_text += "# number of lines of data\n"
+	output_text += "%d\n" % (len(data['lat_scale']) * len(data['lon_scale']) * len(_pressures))
+	# Components of data (3)
+	output_text += "# data line component count\n3\n"
+	# Output Data header
+	output_text += "# now the data in axis 3 major order\n# data is: geopotential height [gpm], u-component wind [m/s], v-component wind [m/s]\n"
+
+	# Now we need to format our output values.
+
+	_values = ""
+	# TODO: Nice Numpy way of doing this.
+	for pressureidx, pressure in enumerate(_pressures):
+	    for latidx, latitude in enumerate(data['lat_scale']):
+	       for lonidx, longitude in enumerate(data['lon_scale']):
+	       		_hgt_val = data[pressure]['HGT'][lonidx,latidx]
+	       		_ugrd_val = data[pressure]['UGRD'][lonidx,latidx]
+	       		_vgrd_val = data[pressure]['VGRD'][lonidx,latidx]
+
+	       		output_text += "%.5f,%.5f,%.5f\n" % (_hgt_val,_ugrd_val,_vgrd_val)
+
+	# Write out to file!
+	f = open(_output_filename,'w')
+	f.write(output_text)
+	f.close()
+
+	return (_output_filename, output_text)
+
+
+
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--age', type=int, default=0, help="Age of the model to grab, in blocks of 6 hours.")
@@ -148,6 +314,7 @@ if __name__ == '__main__':
 	parser.add_argument('--latdelta', type=float, default=10.0, help='tile radius in latitude in degrees')
 	parser.add_argument('--londelta', type=float, default=10.0, help='tile radius in longitude in degrees')
 	parser.add_argument('--model', type=str, default='0p25_1hr', help="GFS Model to use.")
+	parser.add_argument('--output_dir', type=str, default='./gfs/', help='GFS data output directory.')
 	args = parser.parse_args()
 
 	_model_dt = determine_latest_available_dataset(model=args.model, forecast_time=args.future)
@@ -168,13 +335,21 @@ if __name__ == '__main__':
 			londelta=args.londelta
 			)
 
-		success = download_grib(url, params, filename='output.grib')
+		success = download_grib(url, params, filename='temp.grib')
 
 		if success:
-			logging.info("Dowloaded data for T+%03d" % forecast_time)
+			logging.info("Downloaded data for T+%03d" % forecast_time)
 		else:
 			logging.error("Could not download data for T+%03d" % forecast_time)
 
 
 		# TODO: Process GRIB file into cusf-predictor compatible output
+		logging.info("Processing GRIB file...")
+		_wind = parse_grib_to_dict('temp.grib')
+
+		if _wind is not None:
+			(_filename, _text) = wind_dict_to_cusf(_wind, output_dir=args.output_dir)
+			logging.info("GFS data written to: %s" % _filename)
+		else:
+			print("Error processing GRIB file.")
 
