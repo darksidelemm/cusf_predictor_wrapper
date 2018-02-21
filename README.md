@@ -40,6 +40,9 @@ The `pred` binary then needs to be copied into the 'apps' directory, or somewher
 $ cp pred ../../apps/
 ```
 
+A pre-compiled Windows binary of the predictor is available here: http://rfhead.net/horus/cusf_standalone_predictor.zip
+Use at your own risk!
+
 ## 3. Getting Wind Data
 The predictor binary uses a custom wind data format, extracted from NOAA's Global Forecast System wind models. The `get_wind_data.py` Python script pulls down and formats the relevant data from NOAA's [NOMADS](http://nomads.ncep.noaa.gov) server.
 
