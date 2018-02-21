@@ -1,6 +1,8 @@
 # CUSF Standalone Predictor - Python Wrapper
 This is a semi-fork of the [CUSF Standalone Predictor](https://github.com/jonsowman/cusf-standalone-predictor/), which provides a Python wrapper around the predictor binary, and provides a means of gathering the requisite wind data.
 
+2018-02 Update: Wind downloader updated to use the [NOMADS GRIB Filter](http://nomads.ncep.noaa.gov/txt_descriptions/grib_filter_doc.shtml), as the OpenDAP interface stopped working. As such, we no longer require PyDAP, but we do now require GDAL to read in the GRIB2 files.
+
 ## 1. Install the Python Wrapper
 The usual Python package installation utilities work for this:
 ```
@@ -11,9 +13,16 @@ This should grab the necessary Python dependencies, but if not, they are:
  * python-dateutil
  * shapely
  * fastkml
- * pydap==3.1.1
+ * gdal
 
-Due to requiring a specific version of [PyDAP](https://github.com/pydap/pydap) to download wind model data, this software requires *Python 2.7*. This is a result of an API change between 3.1.1 and 3.2 (the first Python3 supported version). Pull requests to help upgrade to the newer API would be appreciated!
+GDAL may need to be installed separately using the system package manager, for example:
+```
+Debian/Ubuntu: apt-get install python-gdal
+OSX (Macports): port install gdal +grib
+Windows (Anaconda Python): conda install gdal
+```
+Note that on Windows you also need to install the [Visual C++ 2008 Redistributable](https://www.microsoft.com/en-us/download/details.aspx?id=26368&ranMID=24542&ranEAID=TnL5HPStwNw&ranSiteID=TnL5HPStwNw-LlmdBk4XVrcPuOVDR8ONKA&tduid=(01174a65b485bdf3885d3de68395d4e3)(256380)(2459594)(TnL5HPStwNw-LlmdBk4XVrcPuOVDR8ONKA)()) for GDAL to import in Python correctly.
+
 
 ## 2. Building the Predictor
 The predictor itself is a binary ('pred'), which we (currently) build seperately, using CMake:
@@ -36,7 +45,7 @@ The predictor binary uses a custom wind data format, extracted from NOAA's Globa
 
 An example of running `get_wind_data.py` is as follows:
 ```
-$ python get_wind_data.py --lat=-33 --lon=139 --latdelta=10 --londelta=10 -v -f 24 -r 0p50 -o gfs
+$ python get_wind_data.py --lat=-33 --lon=139 --latdelta=10 --londelta=10 -f 24 -m 0p50 -o gfs
 ```
 The command line arguments are as follows:
 ```
@@ -47,14 +56,12 @@ Area of interest:
      --londelta    Gather data from lon+/-londelta
 
    Time of interest:
-     -p X    Gather data up to X hours into the past. 
-     -f X   Gather data up to X hours into the future. Make sure you get enough for the flight!   
+     -f X   Gather data up to X hours into the future, from the start of the most recent model. (Note that this can be up to 8 hours in the past.) Make sure you get enough for the flight!   
    
    GFS Model Choice:
-     -r <model>    Choose between either:
-           1p00  - 1 Degree Spatial, 6-hour Time Resolution
-           0p50  - 0.5 Degree Spatial, 3-hour Time Resolution (default)
-           0p25 - 0.25 Degree Spatial, 1-hour Time Resolution
+     -m <model>    Choose between either:
+           0p50  - 0.5 Degree Spatial, 3-hour Time Resolution
+           0p25_1hr - 0.25 Degree Spatial, 1-hour Time Resolution (default)
 
    Other settings:
      -v  Verbose output
