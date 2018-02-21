@@ -13,6 +13,7 @@ import requests
 import argparse
 import logging
 import datetime
+import time
 import numpy as np
 from osgeo import gdal
 
@@ -138,6 +139,43 @@ def determine_latest_available_dataset(model='0p25_1hr', forecast_time=0):
             continue
 
     logging.error("Could not find a model with the required data.")
+    return None
+
+
+def wait_for_newest_dataset(model='0p25_1hr', forecast_time=0, timeout=4*60):
+    ''' Wait until enough data from the newest dataset is available. '''
+
+    # NOTE: Not all models have all forecast hours available!
+    # Clip the forecast time to the nearest available hour
+    _times = VALID_MODELS[model]['times']
+    _forecast_time = _times[find_nearest(_times, forecast_time)]
+
+    # Attempt to grab a small amount of data from the most recent model.
+    # if that fails, go to the next most recent, and continue until either we have data, or have completely failed.
+    _start_time = time.time()
+    while (time.time()-_start_time) < timeout*60:
+        _model_dt = latest_model_name(0)
+        _model_timestring = _model_dt.strftime("%Y%m%d%H")
+        logging.info("Testing Model: %s" % _model_timestring)
+        (_url, _params) = generate_filter_request(
+                                                model=model,
+                                                forecast_time=_forecast_time,
+                                                model_dt = _model_dt,
+                                                lat=0.0,
+                                                lon=0.0,
+                                                latdelta=1.0,
+                                                londelta=1.0)
+
+        _r = requests.get(_url, params=_params, timeout=REQUEST_TIMEOUT)
+        if _r.status_code == requests.codes.ok:
+            logging.info("Found valid data in model %s!" % _model_timestring)
+            return _model_dt
+        else:
+            logging.info("Model does not exist, or does not contain the required data yet. Waiting...")
+            time.sleep(120)
+            continue
+
+    logging.error("Could not find a model with the required data within timeout period.")
     return None
 
 
@@ -326,6 +364,7 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--model', type=str, default='0p25_1hr', help="GFS Model to use.")
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help="Verbose output.")
     parser.add_argument('-o', '--output_dir', type=str, default='./gfs/', help='GFS data output directory.')
+    parser.add_argument('--wait', type=int, default=0, help="Force use of the latest dataset, and wait up to X minutes for the data to become available.")
     args = parser.parse_args()
 
     if args.verbose:
@@ -333,7 +372,10 @@ if __name__ == '__main__':
     else:
         logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-    _model_dt = determine_latest_available_dataset(model=args.model, forecast_time=args.future)
+    if args.wait == 0:
+        _model_dt = determine_latest_available_dataset(model=args.model, forecast_time=args.future)
+    else:
+        _model_dt = wait_for_newest_dataset(model=args.model, forecast_time=args.future, timeout=args.wait)
 
     if _model_dt == None:
         sys.exit(1)
