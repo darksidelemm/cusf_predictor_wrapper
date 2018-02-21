@@ -43,13 +43,10 @@ def gfs_model_age(gfs_path="./gfs"):
 
     try:
         _f = open(dataset_file,'r')
-        dataset_url = _f.read()
+        dataset_time = _f.read()
         _f.close()
 
-        dataset_date = dataset_url.split('/')[5]
-        dataset_hour = dataset_url.split('/')[6].split('_')[3]
-
-        return "%s-%s" % (dataset_date, dataset_hour)
+        return dataset_time
     except:
         return "Unknown"
 
