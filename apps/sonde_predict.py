@@ -10,7 +10,7 @@
 #
 #	For this script to work correctly, we need a weeks worth of GFS data available within the gfs directory.
 #	This can be gathered using get_wind_data.py (or scripted with wind_grabber.sh), using :
-#	    python get_wind_data.py --lat=-33 --lon=139 --latdelta=10 --londelta=10 -v -f 168 -r 0p25 -o gfs
+#	    python get_wind_data.py --lat=-33 --lon=139 --latdelta=10 --londelta=10 -f 168 -m 0p25_1hr -o gfs
 #	with lat/lon parameters chaged as appropriate.
 #
 
