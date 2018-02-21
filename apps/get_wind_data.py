@@ -6,7 +6,6 @@
 #
 #   Download GRIB files and convert them to predict-compatible GFS files.
 #
-import pygrib
 import sys
 import os.path
 import traceback
