@@ -175,7 +175,8 @@ def flight_path_burst_placemark(flight_path,
 
 def write_flight_path_kml(flight_data,
                         filename="prediction.kml",
-                        comment="HAB Prediction"):
+                        comment="HAB Prediction",
+                        kml_hack=True):
     """ Write out flight path geometry objects to a kml file. """
 
     kml_root = fastkml.kml.KML()
@@ -190,5 +191,8 @@ def write_flight_path_kml(flight_data,
         kml_doc.append(_flight)
 
     with open(filename,'w') as kml_file:
-        kml_file.write(kml_doc.to_string())
+        kml_str = kml_doc.to_string()
+        if kml_hack:
+            kml_str = kml_str.replace('kml:','').replace(':kml','')
+        kml_file.write(kml_str)
         kml_file.close()
