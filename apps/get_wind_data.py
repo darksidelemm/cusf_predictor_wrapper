@@ -8,6 +8,9 @@
 #
 import sys
 import os.path
+from os import remove
+import shutil
+from tempfile import mkdtemp
 import traceback
 import requests
 import argparse
@@ -351,7 +354,27 @@ def wind_dict_to_cusf(data, output_dir='./gfs/'):
 
     return (_output_filename, output_text)
 
+# Copy a directory over another existing directory ( https://stackoverflow.com/a/12514470 )
+def copytree(src, dst, symlinks=False, ignore=None):
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dst, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, d, symlinks, ignore)
+        else:
+            shutil.copy2(s, d)
 
+# Remove directory contents ( https://stackoverflow.com/a/185941 )
+def remove_dir_contents(_dir):
+    for file in os.listdir(_dir):
+        file_path = os.path.join(_dir, file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print(e)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -380,8 +403,24 @@ if __name__ == '__main__':
     if _model_dt == None:
         sys.exit(1)
 
+    # Check for existing dataset
+    if os.path.exists(os.path.join(args.output_dir, "dataset.txt")):
+        with open(os.path.join(args.output_dir, "dataset.txt"), 'r') as f:
+            f_data = f.read().replace('\n', '')
+        logging.info("Found existing dataset %s", f_data)
+        _existing_model_dt = datetime.datetime.strptime(f_data, "%Y%m%d%Hz")
+        if(_existing_model_dt >= _model_dt):
+            logging.info("No new data available")
+            sys.exit(0)
+        else:
+            logging.info("Downloading newer dataset %s" % _model_dt.strftime("%Y%m%d%Hz"))
+
+    # Create temporary directory for download
+    _temp_dir = mkdtemp()
+    logging.info("Created temporary directory %s" % _temp_dir)
+
     # Write model name into dataset.txt
-    f = open(os.path.join(args.output_dir, "dataset.txt"), 'w')
+    f = open(os.path.join(_temp_dir, "dataset.txt"), 'w')
     f.write("%s" % _model_dt.strftime("%Y%m%d%Hz"))
     f.close()
 
@@ -402,7 +441,7 @@ if __name__ == '__main__':
             londelta=args.londelta
             )
 
-        success = download_grib(url, params, filename='temp.grib')
+        success = download_grib(url, params, filename=os.path.join(_temp_dir, 'temp.grib'))
 
         if success:
             logging.info("Downloaded data for T+%03d" % forecast_time)
@@ -412,13 +451,26 @@ if __name__ == '__main__':
 
         # Now process the 
         logging.info("Processing GRIB file...")
-        _wind = parse_grib_to_dict('temp.grib')
+        _wind = parse_grib_to_dict(os.path.join(_temp_dir, 'temp.grib'))
+        remove(os.path.join(_temp_dir, 'temp.grib'))
 
         if _wind is not None:
-            (_filename, _text) = wind_dict_to_cusf(_wind, output_dir=args.output_dir)
+            (_filename, _text) = wind_dict_to_cusf(_wind, output_dir=_temp_dir)
             logging.info("GFS data written to: %s" % _filename)
         else:
             logging.error("Error processing GRIB file.")
+
+    # Clean out output directory if it already exists, create if it does not
+    if os.path.exists(args.output_dir):
+        remove_dir_contents(args.output_dir)
+    else:
+        os.mkdir(args.output_dir)
+
+    # Copy temporary directory into output directory
+    copytree(_temp_dir, args.output_dir)
+
+    # Clean up temporary directory
+    shutil.rmtree(_temp_dir)
 
     logging.info("Finished!")
 
