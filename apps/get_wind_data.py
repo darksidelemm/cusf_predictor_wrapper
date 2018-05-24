@@ -354,6 +354,27 @@ def wind_dict_to_cusf(data, output_dir='./gfs/'):
 
     return (_output_filename, output_text)
 
+# Copy a directory over another existing directory ( https://stackoverflow.com/a/12514470 )
+def copytree(src, dst, symlinks=False, ignore=None):
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dst, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, d, symlinks, ignore)
+        else:
+            shutil.copy2(s, d)
+
+# Remove directory contents ( https://stackoverflow.com/a/185941 )
+def remove_dir_contents(_dir):
+    for file in os.listdir(_dir):
+        file_path = os.path.join(_dir, file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print(e)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -439,12 +460,17 @@ if __name__ == '__main__':
         else:
             logging.error("Error processing GRIB file.")
 
-    # Remove output directory if it already exists
+    # Clean out output directory if it already exists, create if it does not
     if os.path.exists(args.output_dir):
-        shutil.rmtree(args.output_dir)
+        remove_dir_contents(args.output_dir)
+    else:
+        os.mkdir(args.output_dir)
 
-    # Move temporary directory to output directory
-    shutil.move(_temp_dir, args.output_dir)
+    # Copy temporary directory into output directory
+    copytree(_temp_dir, args.output_dir)
+
+    # Clean up temporary directory
+    shutil.rmtree(_temp_dir)
 
     logging.info("Finished!")
 
