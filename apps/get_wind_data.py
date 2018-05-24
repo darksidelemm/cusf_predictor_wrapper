@@ -355,16 +355,6 @@ def wind_dict_to_cusf(data, output_dir='./gfs/'):
     return (_output_filename, output_text)
 
 
-# Copy a directory over another existing directory ( https://stackoverflow.com/a/12514470 )
-def copytree(src, dst, symlinks=False, ignore=None):
-    for item in os.listdir(src):
-        s = os.path.join(src, item)
-        d = os.path.join(dst, item)
-        if os.path.isdir(s):
-            shutil.copytree(s, d, symlinks, ignore)
-        else:
-            shutil.copy2(s, d)
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--age', type=int, default=0, help="Age of the model to grab, in blocks of 6 hours.")
@@ -441,6 +431,7 @@ if __name__ == '__main__':
         # Now process the 
         logging.info("Processing GRIB file...")
         _wind = parse_grib_to_dict(os.path.join(_temp_dir, 'temp.grib'))
+        remove(os.path.join(_temp_dir, 'temp.grib'))
 
         if _wind is not None:
             (_filename, _text) = wind_dict_to_cusf(_wind, output_dir=_temp_dir)
@@ -448,11 +439,12 @@ if __name__ == '__main__':
         else:
             logging.error("Error processing GRIB file.")
 
-    # Move all files from temporary directory to output directory
-    copytree(_temp_dir, args.output_dir)
+    # Remove output directory if it already exists
+    if os.path.exists(args.output_dir):
+        shutil.rmtree(args.output_dir)
 
-    # Clean up temporary directory
-    shutil.rmtree(_temp_dir)
+    # Move temporary directory to output directory
+    shutil.move(_temp_dir, args.output_dir)
 
     logging.info("Finished!")
 
