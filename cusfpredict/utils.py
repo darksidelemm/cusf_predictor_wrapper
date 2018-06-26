@@ -67,6 +67,16 @@ def flight_path_to_linestring(flight_path):
     return LineString(track_points)
 
 
+def flight_path_to_polyline(flight_path):
+    ''' Convert a flight path to an array suitable for use with leaflet's PolyLine '''
+    track_points = []
+    for _point in flight_path:
+        # Flight path array is in lat,lon,alt order, needs to be in lon,lat,alt
+        track_points.append([_point[1],_point[2],_point[3]])
+
+    return track_points
+
+
 def flight_path_to_geometry(flight_path,
     name="Flight Path",
     comment="Predicted Flight Path Data",
