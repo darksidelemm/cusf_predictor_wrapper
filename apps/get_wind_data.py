@@ -287,7 +287,7 @@ def wind_dict_to_cusf(data, output_dir='./gfs/'):
             _pressures.append(_key)
 
     # Sort the list of pressures from highest to lowest
-    _pressures = np.flip(np.sort(_pressures),0)
+    _pressures = np.sort(_pressures)[::-1]
 
 
     # Build up the output file, section by section.
