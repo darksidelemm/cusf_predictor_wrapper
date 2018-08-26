@@ -34,6 +34,7 @@ $ cd build
 $ cmake ../
 $ make
 ```
+Depending what packages are installed by default on your system, you may need to install the `libglib2.0-dev` package.
 
 The `pred` binary then needs to be copied into the 'apps' directory, or somewhere else useful, i.e.
 ```
