@@ -4,17 +4,12 @@ This is a semi-fork of the [CUSF Standalone Predictor](https://github.com/jonsow
 2018-02 Update: Wind downloader updated to use the [NOMADS GRIB Filter](http://nomads.ncep.noaa.gov/txt_descriptions/grib_filter_doc.shtml), as the OpenDAP interface stopped working. As such, we no longer require PyDAP, but we do now require GDAL to read in the GRIB2 files.
 
 ## 1. Install the Python Wrapper
-The usual Python package installation utilities work for this:
+Clone this repository with:
 ```
-$ sudo python setup.py install
+$ git clone https://github.com/darksidelemm/cusf_predictor_wrapper.git
 ```
 
-This should grab the necessary Python dependencies, but if not, they are:
- * python-dateutil
- * shapely
- * fastkml
- * gdal
-
+The wind data downloader script depends on python-gdal, which needs gdal installed. 
 GDAL may need to be installed separately using the system package manager, for example:
 ```
 Debian/Ubuntu: apt-get install python-gdal
@@ -22,6 +17,18 @@ OSX (Macports): port install gdal +grib
 Windows (Anaconda Python): conda install gdal
 ```
 Note that on Windows you also need to install the [Visual C++ 2008 Redistributable](https://www.microsoft.com/en-us/download/details.aspx?id=26368&ranMID=24542&ranEAID=TnL5HPStwNw&ranSiteID=TnL5HPStwNw-LlmdBk4XVrcPuOVDR8ONKA&tduid=(01174a65b485bdf3885d3de68395d4e3)(256380)(2459594)(TnL5HPStwNw-LlmdBk4XVrcPuOVDR8ONKA)()) for GDAL to import in Python correctly.
+
+The custpredict python package can then be installed in the usual Python way:
+```
+$ cd cusf_predictor_wrapper
+$ sudo python setup.py install
+```
+
+This should grab the other required Python dependencies, but if not, they are:
+ * python-dateutil
+ * shapely
+ * fastkml
+ * python-gdal (which may have been installed via apt-get previously)
 
 
 ## 2. Building the Predictor
@@ -34,7 +41,7 @@ $ cd build
 $ cmake ../
 $ make
 ```
-Depending what packages are installed by default on your system, you may need to install the `libglib2.0-dev` package.
+Depending what packages are installed by default on your system, you may need to install the `cmake ` and `libglib2.0-dev` packages.
 
 The `pred` binary then needs to be copied into the 'apps' directory, or somewhere else useful, i.e.
 ```
