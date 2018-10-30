@@ -9,7 +9,7 @@ Clone this repository with:
 $ git clone https://github.com/darksidelemm/cusf_predictor_wrapper.git
 ```
 
-The wind data downloader script depends on python-gdal, which needs gdal installed. 
+The wind data downloader script depends on python-gdal, which needs gdal installed.
 GDAL may need to be installed separately using the system package manager, for example:
 ```
 Debian/Ubuntu: apt-get install python-gdal
@@ -32,7 +32,13 @@ This should grab the other required Python dependencies, but if not, they are:
 
 
 ## 2. Building the Predictor
-The predictor itself is a binary ('pred'), which we (currently) build seperately, using CMake:
+The predictor itself is a binary ('pred'), which we (currently) build seperately, using CMake.
+You may need to install `cmake` and `libglib2.0-dev` via your package manager before building, i.e.
+```
+$ sudo apt-get install cmake libglib2.0-dev
+```
+
+Then, from within the cusf_predictor_wrapper directory, run the following to build the predictor binary:
 
 ```
 $ cd src
@@ -41,7 +47,7 @@ $ cd build
 $ cmake ../
 $ make
 ```
-Depending what packages are installed by default on your system, you may need to install the `cmake ` and `libglib2.0-dev` packages.
+
 
 The `pred` binary then needs to be copied into the 'apps' directory, or somewhere else useful, i.e.
 ```
