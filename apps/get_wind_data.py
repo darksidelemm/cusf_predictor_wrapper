@@ -21,7 +21,7 @@ import numpy as np
 from osgeo import gdal
 
 # GRIB Filter URL
-GRIB_FILTER_URL = "http://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_%s.pl"
+GRIB_FILTER_URL = "https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_%s.pl"
 
 # GFS Parameters we are interested in
 # TODO: Add additional levels available in the gfs 'B' model 
