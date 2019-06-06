@@ -21,12 +21,12 @@ import numpy as np
 from osgeo import gdal
 
 # GRIB Filter URL
-GRIB_FILTER_URL = "https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_%s.pl"
+GRIB_FILTER_URL = "http://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_%s.pl"
+# Temporary parallel FV3 Model URL
+#GRIB_FILTER_URL = "https://nomads.ncep.noaa.gov/cgi-bin/filter_fv3_gfs_%s.pl"
 
 # GFS Parameters we are interested in
-# TODO: Add additional levels available in the gfs 'B' model 
-# ( http://www.nco.ncep.noaa.gov/pmb/products/gfs/gfs.t00z.pgrb2b.0p25.f006.shtml )
-GFS_LEVELS = [1000.0,975.0,950.0,925.0,900.0,850.0,800.0,750.0,700.0,650.0,600.0,550.0,500.0,450.0,400.0,350.0,300.0,250.0,200.0,150.0,100.0,70.0,50.0,30.0,20.0,10.0,7.0,5.0,3.0,2.0,1.0]
+GFS_LEVELS = [1000.0,975.0,950.0,925.0,900.0,850.0,800.0,750.0,700.0,650.0,600.0,550.0,500.0,450.0,400.0,350.0,300.0,250.0,200.0,150.0,100.0,70.0,50.0,30.0,20.0,10.0,7.0,5.0,3.0,2.0,1.0,0.4]
 GFS_PARAMS = ['HGT', 'UGRD', 'VGRD']
 
 # Dictionary containg available times and other information for each supported model.
@@ -82,7 +82,7 @@ def generate_filter_request(model='0p25_1hr',
 
     # Get latest model time
     _model_dt = model_dt
-    _model_timestring = _model_dt.strftime("%Y%m%d%H")
+    _model_timestring = _model_dt.strftime("%Y%m%d/%H")
     _model_hour = _model_dt.strftime("%H")
 
     _filter_url = GRIB_FILTER_URL % model
@@ -123,7 +123,7 @@ def determine_latest_available_dataset(model='0p25_1hr', forecast_time=0):
     # if that fails, go to the next most recent, and continue until either we have data, or have completely failed.
     for _model_age in range(0,-5,-1):
         _model_dt = latest_model_name(_model_age)
-        _model_timestring = _model_dt.strftime("%Y%m%d%H")
+        _model_timestring = _model_dt.strftime("%Y%m%d/%H")
         logging.info("Testing Model: %s" % _model_timestring)
         (_url, _params) = generate_filter_request(
                                                 model=model,
@@ -158,7 +158,7 @@ def wait_for_newest_dataset(model='0p25_1hr', forecast_time=0, timeout=4*60):
     _start_time = time.time()
     while (time.time()-_start_time) < timeout*60:
         _model_dt = latest_model_name(0)
-        _model_timestring = _model_dt.strftime("%Y%m%d%H")
+        _model_timestring = _model_dt.strftime("%Y%m%d/%H")
         logging.info("Testing Model: %s" % _model_timestring)
         (_url, _params) = generate_filter_request(
                                                 model=model,
@@ -287,7 +287,7 @@ def wind_dict_to_cusf(data, output_dir='./gfs/'):
             _pressures.append(_key)
 
     # Sort the list of pressures from highest to lowest
-    _pressures = np.sort(_pressures)[::-1]
+    _pressures = np.flip(np.sort(_pressures),0)
 
 
     # Build up the output file, section by section.
