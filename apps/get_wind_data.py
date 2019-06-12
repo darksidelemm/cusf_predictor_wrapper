@@ -26,7 +26,8 @@ GRIB_FILTER_URL = "http://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_%s.pl"
 #GRIB_FILTER_URL = "https://nomads.ncep.noaa.gov/cgi-bin/filter_fv3_gfs_%s.pl"
 
 # GFS Parameters we are interested in
-GFS_LEVELS = [1000.0,975.0,950.0,925.0,900.0,850.0,800.0,750.0,700.0,650.0,600.0,550.0,500.0,450.0,400.0,350.0,300.0,250.0,200.0,150.0,100.0,70.0,50.0,30.0,20.0,10.0,7.0,5.0,3.0,2.0,1.0,0.4]
+# Note: There is also a new 0.4mb pressure level which we are not using yet.
+GFS_LEVELS = [1000.0,975.0,950.0,925.0,900.0,850.0,800.0,750.0,700.0,650.0,600.0,550.0,500.0,450.0,400.0,350.0,300.0,250.0,200.0,150.0,100.0,70.0,50.0,30.0,20.0,10.0,7.0,5.0,3.0,2.0,1.0]
 GFS_PARAMS = ['HGT', 'UGRD', 'VGRD']
 
 # Dictionary containg available times and other information for each supported model.
@@ -103,7 +104,10 @@ def generate_filter_request(model='0p25_1hr',
 
     # Add in the levels we want:
     for _level in GFS_LEVELS:
-        _filter_params['lev_%d_mb' % int(_level)] = 'on'
+        if _level%1.0 == 0.0:
+            _filter_params['lev_%d_mb' % int(_level)] = 'on'
+        else:
+            _filter_params['lev_%.1f_mb' % _level] = 'on'
 
 
     logging.debug("Filter URL: %s" % _filter_url)
