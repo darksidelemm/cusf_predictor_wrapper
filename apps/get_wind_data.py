@@ -392,6 +392,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help="Verbose output.")
     parser.add_argument('-o', '--output_dir', type=str, default='./gfs/', help='GFS data output directory.')
     parser.add_argument('--wait', type=int, default=0, help="Force use of the latest dataset, and wait up to X minutes for the data to become available.")
+    parser.add_argument('--override', action='store_true', default=False, help="Re-download data, even if there is existing data.")
     args = parser.parse_args()
 
     if args.verbose:
@@ -413,7 +414,7 @@ if __name__ == '__main__':
             f_data = f.read().replace('\n', '')
         logging.info("Found existing dataset %s", f_data)
         _existing_model_dt = datetime.datetime.strptime(f_data, "%Y%m%d%Hz")
-        if(_existing_model_dt >= _model_dt):
+        if( (_existing_model_dt >= _model_dt) and not args.override):
             logging.info("No new data available")
             sys.exit(0)
         else:
@@ -422,12 +423,6 @@ if __name__ == '__main__':
     # Create temporary directory for download
     _temp_dir = mkdtemp()
     logging.info("Created temporary directory %s" % _temp_dir)
-
-    # Write model name into dataset.txt
-    f = open(os.path.join(_temp_dir, "dataset.txt"), 'w')
-    f.write("%s" % _model_dt.strftime("%Y%m%d%Hz"))
-    f.close()
-
     logging.info("Starting download of wind data...")
     
     # Get a list of valid forecast times, up until the user-specified time.
@@ -469,6 +464,12 @@ if __name__ == '__main__':
         remove_dir_contents(args.output_dir)
     else:
         os.mkdir(args.output_dir)
+
+    # Write model name into dataset.txt
+    logging.info("Writing out dataset info.")
+    f = open(os.path.join(_temp_dir, "dataset.txt"), 'w')
+    f.write("%s" % _model_dt.strftime("%Y%m%d%Hz"))
+    f.close()
 
     # Copy temporary directory into output directory
     copytree(_temp_dir, args.output_dir)
