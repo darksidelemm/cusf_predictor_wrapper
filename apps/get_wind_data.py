@@ -6,6 +6,9 @@
 #
 #   Download GRIB files and convert them to predict-compatible GFS files.
 #
+#   TODO:
+#    [ ] Use HTTP Range requests instead of using the GRIB filter.
+#
 import sys
 import os.path
 from os import remove
@@ -42,7 +45,8 @@ VALID_MODELS = {
 }
 
 # Other Globals
-REQUEST_TIMEOUT = 30
+REQUEST_TIMEOUT = 60 # GRIB filter requests have been observed to take up to 60 seconds to complete...
+REQUEST_RETRIES = 10 # We often have to retry a LOT. 
 
 # Functions to Generate the GRIB Filter URL
 
@@ -110,8 +114,8 @@ def generate_filter_request(model='0p25_1hr',
             _filter_params['lev_%.1f_mb' % _level] = 'on'
 
 
-    logging.debug("Filter URL: %s" % _filter_url)
-    logging.debug("Filter Parameters: %s" % str(_filter_params))
+    #logging.debug("Filter URL: %s" % _filter_url)
+    #logging.debug("Filter Parameters: %s" % str(_filter_params))
 
     return (_filter_url, _filter_params)
 
@@ -138,12 +142,20 @@ def determine_latest_available_dataset(model='0p25_1hr', forecast_time=0):
                                                 latdelta=1.0,
                                                 londelta=1.0)
 
-        _r = requests.get(_url, params=_params, timeout=REQUEST_TIMEOUT)
-        if _r.status_code == requests.codes.ok:
-            logging.info("Found valid data in model %s!" % _model_timestring)
-            return _model_dt
-        else:
-            continue
+
+        _retries = REQUEST_RETRIES
+        while _retries > 0:
+            try:
+                _r = requests.get(_url, params=_params, timeout=REQUEST_TIMEOUT)
+                if _r.status_code == requests.codes.ok:
+                    logging.info("Found valid data in model %s!" % _model_timestring)
+                    return _model_dt
+                else:
+                    break
+            except Exception as e:
+                logging.error("Error when testing model, retrying: %s" % str(e))
+                _retries -= 1
+                continue
 
     logging.error("Could not find a model with the required data.")
     return None
@@ -173,14 +185,23 @@ def wait_for_newest_dataset(model='0p25_1hr', forecast_time=0, timeout=4*60):
                                                 latdelta=1.0,
                                                 londelta=1.0)
 
-        _r = requests.get(_url, params=_params, timeout=REQUEST_TIMEOUT)
-        if _r.status_code == requests.codes.ok:
-            logging.info("Found valid data in model %s!" % _model_timestring)
-            return _model_dt
-        else:
-            logging.info("Model does not exist, or does not contain the required data yet. Waiting...")
-            time.sleep(120)
-            continue
+
+        _retries = REQUEST_RETRIES
+        while _retries > 0:
+            try:
+                _r = requests.get(_url, params=_params, timeout=REQUEST_TIMEOUT)
+                if _r.status_code == requests.codes.ok:
+                    logging.info("Found valid data in model %s!" % _model_timestring)
+                    return _model_dt
+                else:
+                    logging.info("Model does not exist, or does not contain the required data yet. Waiting...")
+                    time.sleep(120)
+                    break
+            except Exception as e:
+                logging.error("Error when testing model, retrying: %s" % str(e))
+                _retries -= 1
+                continue
+
 
     logging.error("Could not find a model with the required data within timeout period.")
     return None
@@ -189,16 +210,35 @@ def wait_for_newest_dataset(model='0p25_1hr', forecast_time=0, timeout=4*60):
 # Functions to poll the GRIB filter, and download data.
 def download_grib(url, params, filename="temp.grib"):
     ''' Attempt to download a GRIB file to disk '''
-    _r = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
+    _retries = REQUEST_RETRIES
 
-    if _r.status_code == requests.codes.ok:
-        # Writeout to disk.
-        f = open(filename, 'wb')
-        f.write(_r.content)
-        f.close()
-        return True
-    else:
-        return False
+    while _retries > 0:
+        try:
+            _start = time.time()
+            _r = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
+
+            # Return code is OK, write out to disk.
+            if _r.status_code == requests.codes.ok:
+                # Writeout to disk.
+                _duration = time.time() - _start
+                logging.info("GRIB request took %.1f seconds." % _duration)
+                f = open(filename, 'wb')
+                f.write(_r.content)
+                f.close()
+                return True
+            # Return status is something else...
+            else:
+                logging.error("Request returned error code: %s" % str(_r.status_code))
+                _retries -= 1
+                continue
+
+        except Exception as e:
+            logging.error("Request failed with error: %s" % str(e))
+            _retries -= 1
+            continue
+
+    logging.error("Attempt to download GRIB failed after %d retries." % retries)
+    return False
 
 
 # Functions to parse GRIB data using GDAL
