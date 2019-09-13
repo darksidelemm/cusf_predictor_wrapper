@@ -201,7 +201,9 @@ int main(int argc, const char *argv[]) {
 
         // The 1.1045 comes from a magic constant buried in
         // ~cuspaceflight/public_html/predict/index.php.
-        drag_coeff = iniparser_getdouble(scenario, "altitude-model:descent-rate", 1.0) * 1.1045;
+        // MJ: This is actually the square root of a rounded sea-level air density figure (1.22)
+        // A more precise definition is sqrt(1.225) = 1.10679
+        drag_coeff = iniparser_getdouble(scenario, "altitude-model:descent-rate", 1.0) * 1.10679;
 
         burst_alt = iniparser_getdouble(scenario, "altitude-model:burst-altitude", 1.0);
 

@@ -37,7 +37,7 @@ class Predictor:
     def test_pred_bin(self, bin_path):
         ''' Test that a binary is a CUSF predictor binary. '''
         try:
-            pred_version = subprocess.check_output([bin_path, '--version'])
+            pred_version = subprocess.check_output([bin_path, '--version']).decode('ascii')
             if 'Landing Prediction' in pred_version:
                 return True
             else:
@@ -84,7 +84,7 @@ class Predictor:
             subprocess_params.append('-d')
         # Run!
         pred = subprocess.Popen(subprocess_params, stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=env)
-        (pred_stdout, pred_stderr) = pred.communicate(scenario)
+        (pred_stdout, pred_stderr) = pred.communicate(scenario.encode('ascii'))
 
         # Parse stdout data into an array of floats.
         logging.debug("Errors:")
@@ -92,7 +92,7 @@ class Predictor:
 
         # Parse output into an array.
         output = []
-        for line in pred_stdout.split('\n'):
+        for line in pred_stdout.decode('ascii').split('\n'):
             try:
                 fields = line.split(',')
                 timestamp = int(fields[0])
