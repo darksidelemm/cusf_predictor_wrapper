@@ -361,14 +361,14 @@ def wind_dict_to_cusf(data, output_dir='./gfs/'):
     # Size of Axis
     output_text += "%d\n" % len(data['lat_scale'])
     # Values
-    output_text += ",".join(["%.1f" % num for num in data['lat_scale']]) + "\n"
+    output_text += ",".join(["%.2f" % num for num in data['lat_scale']]) + "\n"
 
     # Third Axis Definition - Longitude
     output_text += "# axis 3: longitudes\n"
     # Size of Axis
     output_text += "%d\n" % len(data['lon_scale'])
     # Values
-    output_text += ",".join(["%.1f" % num for num in data['lon_scale']]) + "\n"
+    output_text += ",".join(["%.2f" % num for num in data['lon_scale']]) + "\n"
 
     # DATA BLOCK
     # Number of lines of data
