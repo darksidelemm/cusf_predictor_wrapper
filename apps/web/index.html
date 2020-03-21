@@ -1,0 +1,121 @@
+<html>
+<head>
+    <title>Radiosonde Predictions</title>
+   
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/leaflet.js"></script>
+    <script src='https://unpkg.com/leaflet.gridlayer.googlemutant@latest/Leaflet.GoogleMutant.js'></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="./static/leaflet.polylineDecorator.js"></script>
+    <link rel="stylesheet" href="https://ppete2.github.io/Leaflet.PolylineMeasure/Leaflet.PolylineMeasure.css" />
+    <script src="https://ppete2.github.io/Leaflet.PolylineMeasure/Leaflet.PolylineMeasure.js"></script>
+    <script language="javascript">
+
+    function init() {
+
+        // VARIABLES YOU MIGHT NEED TO CHANGE!
+    
+        // Page title
+        var prediction_title = "Radiosonde Predictions";
+
+        // Map Centre Coordinates
+        var map_centre_lat = -34.9;
+        var map_centre_lon = 138.6;
+        var map_centre_zoom = 9;
+
+        // Prediction JSON file. 
+        var prediction_json = './sonde_predictions.json';
+
+        // Rest of the code...
+
+        var map = L.map('map');
+
+        var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        var esri_sat_map = L.tileLayer(
+            'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 
+            {
+                maxZoom: 18,
+            });
+
+        L.control.polylineMeasure({
+          position: 'topleft',
+          unit: 'metres',
+          showClearControl: true,
+        }).addTo(map);
+
+        var centre_spot = new L.LatLng(map_centre_lat, map_centre_lon);
+        map.setView(centre_spot, map_centre_zoom);
+
+
+        $.ajax({
+             url: prediction_json,
+             dataType: 'json',
+             async: true,
+               success: function(data){
+                // Update the header.
+                $("#pred_header").html("<h1>" + prediction_title + " <small>Dataset: " + data.dataset + "</small></h1>");
+
+                // Ger a sortd list of prediction timestamps.
+                var pred_names = [];
+                for (_pred in data.predictions){
+                  pred_names.push(_pred);
+                }
+                pred_names.sort()
+
+                var predLayers = {}; // Object containing each prediction layer.
+                var layerBounds = new L.LatLngBounds();
+                layerBounds.extend(centre_spot);
+                var predictionMovement = new L.polyline([],{
+                  opacity: 0.5,
+                  color:'green'
+                });
+
+                // Iterate over the predictions
+                for(_pred in pred_names){
+                  // Grab prediction data.
+                  var current_pred_name = pred_names[_pred];
+                  var current_pred = data.predictions[pred_names[_pred]];
+                  var current_pred_path = current_pred.path;
+                  // Extend the map coverage area to cover the predicted landing area.
+                  var landing_lat_lng = current_pred_path[current_pred_path.length - 1];
+                  layerBounds.extend(landing_lat_lng);
+                  predictionMovement.addLatLng(landing_lat_lng);
+
+                  // Create a new layer group containing the landing marker, and the path
+                  // and add it to our list of layers.
+                  predLayers[current_pred_name] = new L.layerGroup()
+                    .addLayer(
+                      new L.marker(current_pred_path[current_pred_path.length - 1])
+                      .bindPopup(current_pred_name)
+                    ).addLayer(
+                      new L.polyline(current_pred_path)
+                      .bindPopup(current_pred_name)
+                    )
+                    .addTo(map);
+                }
+                
+                predictionMovement.addTo(map);
+                var predictionMovementDecorator = L.polylineDecorator(predictionMovement, {
+                  patterns: [
+                    {offset: 25, repeat: 50, symbol: L.Symbol.arrowHead({pixelSize: 15, pathOptions: {fillOpacity: 0.5, weight: 0, color:'green'}})}
+                  ]
+                }).addTo(map);
+                predLayers['Prediction Movement'] = new L.layerGroup([predictionMovement, predictionMovementDecorator]);
+                map.fitBounds(layerBounds);
+
+                map.addControl(new L.Control.Layers({'OSM':osm, 'ESRI Satellite':esri_sat_map}, predLayers));
+              }
+        });
+      }
+    </script>
+
+</head>
+<body onLoad="javascript:init();">
+  <div id="pred_header"></div>
+  <div id="map" style="height: 800px"></div>
+</body>            
+</html>

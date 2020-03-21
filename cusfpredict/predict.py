@@ -14,7 +14,7 @@ import logging
 
 class Predictor:
     ''' CUSF Standalone Predictor Wrapper '''
-    def __init__(self, bin_path = "./pred", gfs_path = "./gfs"):
+    def __init__(self, bin_path = "./pred", gfs_path = "./gfs", verbose=False):
         # Sanity check that binary exists.
         if not os.path.isfile(bin_path):
             raise Exception("Predictor Binary does not exist.")
@@ -33,6 +33,7 @@ class Predictor:
 
         self.bin_path = bin_path
         self.gfs_path = gfs_path
+        self.verbose = verbose
 
     def test_pred_bin(self, bin_path):
         ''' Test that a binary is a CUSF predictor binary. '''
@@ -82,6 +83,9 @@ class Predictor:
         # If we are using 'descent mode', we just flag this to the predictor, so it ignores the ascent rate and burst altitude params.
         if descent_mode:
             subprocess_params.append('-d')
+
+        if self.verbose:
+            subprocess_params.append('-vv')
         # Run!
         pred = subprocess.Popen(subprocess_params, stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=env)
         (pred_stdout, pred_stderr) = pred.communicate(scenario.encode('ascii'))
