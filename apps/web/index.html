@@ -16,8 +16,8 @@
 
         // VARIABLES YOU MIGHT NEED TO CHANGE!
     
-        // Page title
-        var prediction_title = "Radiosonde Predictions";
+        // Page title - This is pre-pended with the site name (defined in an argument to sonde_predict.py)
+        var prediction_title = " Radiosonde Predictions";
 
         // Map Centre Coordinates
         var map_centre_lat = -34.9;
@@ -47,17 +47,16 @@
           showClearControl: true,
         }).addTo(map);
 
-        var centre_spot = new L.LatLng(map_centre_lat, map_centre_lon);
-        map.setView(centre_spot, map_centre_zoom);
-
-
         $.ajax({
              url: prediction_json,
              dataType: 'json',
              async: true,
                success: function(data){
                 // Update the header.
-                $("#pred_header").html("<h1>" + prediction_title + " <small>Dataset: " + data.dataset + "</small></h1>");
+                $("#pred_header").html("<h1>" + data.site + prediction_title + " <small>Dataset: " + data.dataset + "</small></h1>");
+
+                var centre_spot = new L.LatLng(data.launch_lat, data.launch_lon);
+                map.setView(centre_spot, map_centre_zoom);
 
                 // Ger a sortd list of prediction timestamps.
                 var pred_names = [];

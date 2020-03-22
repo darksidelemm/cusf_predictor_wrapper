@@ -13,7 +13,7 @@
 #	    python get_wind_data.py --lat=-33 --lon=139 --latdelta=10 --londelta=10 -f 168 -m 0p25_1hr -o gfs
 #	with lat/lon parameters chaged as appropriate.
 #
-
+import argparse
 import fastkml
 import datetime
 import json
@@ -24,35 +24,53 @@ from cusfpredict.utils import *
 
 # Predictor Parameters
 PRED_BINARY = "./pred"
-GFS_PATH = "./gfs"
+GFS_PATH = "./gfs/"
 
-OUTPUT_FILE = "sonde_predictions"
-
-# Launch Parameters - Update as appropriate for your launch site
+# Launch Parameters
+LAUNCH_TIME = "11:15Z" # This can be anything that dateutil can parse. The time *must* be in UTC.
+LAUNCH_STEP = 12 # Time step, in hours, between launch predictions.
+LAUNCH_TIME_LIMIT = 168 # Predict out this many hours into the future
 LAUNCH_LAT = -34.9499
 LAUNCH_LON = 138.5194
 LAUNCH_ALT = 0.0
-
-# 5m/s is the typical target ascent rate for most radiosonde launches.
 ASCENT_RATE = 5.0
-
-# The descent rate can vary depending on how your site launches their sondes.
-# Note that this is the descent rate just before landing.
-# If a parachute is used, this could be as low as 3m/s.
-# Manual BOM launch sites in Australia use old-stock radar reflectors as parachutes, resulting in a ~6m/s descent rate.
 DESCENT_RATE = 6.0
-
-# Typical burst altitudes are between 25-30km.
 BURST_ALT = 26000.0
+
+# Read in command line arguments.
+parser = argparse.ArgumentParser()
+parser.add_argument('-a', '--ascentrate', type=float, default=ASCENT_RATE, help="Ascent Rate (m/s). Default %.1fm/s" % ASCENT_RATE)
+parser.add_argument('-d', '--descentrate', type=float, default=DESCENT_RATE, help="Descent Rate (m/s). Default %.1dm/s" % DESCENT_RATE)
+parser.add_argument('-b', '--burstalt', type=float, default=BURST_ALT, help="Burst Altitude (m). Default %.1fm" % BURST_ALT)
+parser.add_argument('--launchalt', type=float, default=LAUNCH_ALT, help="Launch Altitude (m). Default 0m")
+parser.add_argument('--latitude', type=float, default=LAUNCH_LAT, help="Launch Latitude (dd.dddd)")
+parser.add_argument('--longitude', type=float, default=LAUNCH_LON, help="Launch Longitude (dd.dddd)")
+parser.add_argument('--time', type=str, default=LAUNCH_TIME, help="First Time of the day (string, UTC). Default = %s" % LAUNCH_TIME)
+parser.add_argument('--step', type=int, default=LAUNCH_STEP, help="Time step between predictions (Hours). Default = %d" % LAUNCH_STEP)
+parser.add_argument('--limit', type=int, default=LAUNCH_TIME_LIMIT, help="Predict up to this many hours into the future. Default = %d" % LAUNCH_TIME_LIMIT)
+parser.add_argument('-s', '--site', type=str, default="Radiosonde", help="Launch site name. Default: Radiosonde")
+parser.add_argument('-o', '--output', type=str, default='sonde_predictions', help="Output JSON File. .json will be appended. Default = sonde_predictions[.json]")
+args = parser.parse_args()
+
+
+OUTPUT_FILE = args.output
+LAUNCH_LAT = args.latitude
+LAUNCH_LON = args.longitude
+LAUNCH_ALT = args.launchalt
+ASCENT_RATE = args.ascentrate
+DESCENT_RATE = args.descentrate
+BURST_ALT = args.burstalt
+
 
 # Set the launch time to the current UTC day, but set the hours to the 12Z sonde
 current_day = datetime.datetime.utcnow()
-LAUNCH_TIME = datetime.datetime(current_day.year, current_day.month, current_day.day, 11, 15)
+launch_hour = parse(args.time)
+LAUNCH_TIME = datetime.datetime(current_day.year, current_day.month, current_day.day, launch_hour.hour, launch_hour.minute)
 
 
 # Parameter Variations
 # These can all be left at zero, or you can add a range of delta values
-launch_time_variations = range(0,168,12) # Every 12 hours from the start time until 7 days time.
+launch_time_variations = range(0,args.limit,args.step)
 
 # A list to store predicton results
 predictions = []
@@ -60,7 +78,10 @@ predictions = []
 # Separate store for JSON output data.
 json_out = {
 	'dataset': gfs_model_age(GFS_PATH),
-	'predictions':{}
+	'predictions':{},
+	'site': args.site,
+	'launch_lat': LAUNCH_LAT,
+	'launch_lon': LAUNCH_LON
 }
 
 # Create the predictor object.
