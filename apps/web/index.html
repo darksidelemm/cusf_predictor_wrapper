@@ -8,8 +8,21 @@
     <script src='https://unpkg.com/leaflet.gridlayer.googlemutant@latest/Leaflet.GoogleMutant.js'></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="./static/leaflet.polylineDecorator.js"></script>
+    <script src="./static/Leaflet.Control.Custom.js"></script>
     <link rel="stylesheet" href="https://ppete2.github.io/Leaflet.PolylineMeasure/Leaflet.PolylineMeasure.css" />
     <script src="https://ppete2.github.io/Leaflet.PolylineMeasure/Leaflet.PolylineMeasure.js"></script>
+
+    <style>
+      body {
+          padding: 0;
+          margin: 0;
+      }
+      html, body, #map {
+          height: 100%;
+          width: 100%;
+      }
+    </style>
+
     <script language="javascript">
 
     function init() {
@@ -29,7 +42,23 @@
 
         // Rest of the code...
 
-        var map = L.map('map');
+        var map = L.map('map', {zoomControl: false});
+
+
+        L.control.custom({
+                position: 'topleft',
+                content : "<div class='pred_header'>Radiosonde Predictions</div>",
+                id: 'pred_header',
+                style   :
+                {
+                    margin: '5px',
+                    padding: '0px 0 0 0',
+                    cursor: 'pointer',
+                }
+            })
+        .addTo(map);
+
+        new L.Control.Zoom({ position: 'topleft' }).addTo(map);
 
         var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -40,6 +69,11 @@
             {
                 maxZoom: 18,
             });
+          
+        // Add OSM Topo Map Layer
+        var osm_topo_map = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://wiki.openstreetmap.org/wiki/OpenTopoMap">OpenTopoMap</a> contributors'
+        });
 
         L.control.polylineMeasure({
           position: 'topleft',
@@ -52,8 +86,6 @@
              dataType: 'json',
              async: true,
                success: function(data){
-                // Update the header.
-                $("#pred_header").html("<h1>" + data.site + prediction_title + " <small>Dataset: " + data.dataset + "</small></h1>");
 
                 var centre_spot = new L.LatLng(data.launch_lat, data.launch_lon);
                 map.setView(centre_spot, map_centre_zoom);
@@ -106,15 +138,18 @@
                 predLayers['Prediction Movement'] = new L.layerGroup([predictionMovement, predictionMovementDecorator]);
                 map.fitBounds(layerBounds);
 
-                map.addControl(new L.Control.Layers({'OSM':osm, 'ESRI Satellite':esri_sat_map}, predLayers));
-              }
+                map.addControl(new L.Control.Layers({'OSM':osm, 'OpenTopo': osm_topo_map,'ESRI Satellite':esri_sat_map}, predLayers));
+
+            // Update the header.
+            $("#pred_header").html("<h1>" + data.site + prediction_title + " <small>Dataset: " + data.dataset + "</small></h1>");
+          }
+
         });
       }
     </script>
 
 </head>
 <body onLoad="javascript:init();">
-  <div id="pred_header"></div>
-  <div id="map" style="height: 800px"></div>
+  <div id="map"></div>
 </body>            
 </html>

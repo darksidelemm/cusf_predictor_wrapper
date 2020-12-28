@@ -40,10 +40,10 @@ rm gfs/*.dat
 
 # Download the wind data.
 # Note that this will wait up to 3 hours for the latest wind data to become available.
-python get_wind_data.py --lat=$HOME_LAT --lon=$HOME_LON --latdelta=$LATLON_DELTA --londelta=$LATLON_DELTA -f $HOUR_RANGE -m 0p25_1hr --wait=180 2>&1 | tee sonde_predict.log 
+python3 get_wind_data.py --lat=$HOME_LAT --lon=$HOME_LON --latdelta=$LATLON_DELTA --londelta=$LATLON_DELTA -f $HOUR_RANGE -m 0p25_1hr --wait=180 2>&1 | tee sonde_predict.log 
 
 # Run predictions
-python sonde_predict.py
+python3 sonde_predict.py
 
 # Copy the resultant json file into the web interface directory.
 # If the web interface is being hosted elsewhere, you may need to replace this with a SCP

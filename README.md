@@ -12,7 +12,7 @@ $ git clone https://github.com/darksidelemm/cusf_predictor_wrapper.git
 The wind data downloader script depends on python-gdal, which needs gdal installed.
 GDAL may need to be installed separately using the system package manager, for example:
 ```
-Debian/Ubuntu: apt-get install python-gdal
+Debian/Ubuntu: apt-get install python3-gdal
 OSX (Macports): port install gdal +grib
 Windows (Anaconda Python): conda install gdal
 ```
@@ -21,7 +21,7 @@ Note that on Windows you also need to install the [Visual C++ 2008 Redistributab
 The custpredict python package can then be installed in the usual Python way:
 ```
 $ cd cusf_predictor_wrapper
-$ sudo python setup.py install
+$ sudo python3 setup.py install
 ```
 
 This should grab the other required Python dependencies, but if not, they are:
@@ -53,6 +53,10 @@ The `pred` binary then needs to be copied into the 'apps' directory, or somewher
 ```
 $ cp pred ../../apps/
 ```
+If you are building this utility for use with chasemapper, then you should copy `pred` into the chasemapper directory:
+```
+$ cp pred ~/chasemapper/
+```
 
 A pre-compiled Windows binary of the predictor is available here: http://rfhead.net/horus/cusf_standalone_predictor.zip
 Use at your own risk!
@@ -62,7 +66,7 @@ The predictor binary uses a custom wind data format, extracted from NOAA's Globa
 
 An example of running `get_wind_data.py` is as follows:
 ```
-$ python get_wind_data.py --lat=-33 --lon=139 --latdelta=10 --londelta=10 -f 24 -m 0p50 -o gfs
+$ python3 get_wind_data.py --lat=-33 --lon=139 --latdelta=10 --londelta=10 -f 24 -m 0p50 -o gfs
 ```
 The command line arguments are as follows:
 ```
@@ -154,7 +158,7 @@ optional arguments:
 
 For example, to predict a radiosonde launch from Adelaide Airport (5m/s ascent, 26km burst, 7.5m/s descent), but to look at what happens if the burst altitude is higher or lower than usual:
 ```
-$ python predict.py --latitude=-34.9499 --longitude=138.5194 -a 5 -d 7.5 -b 26000 --time "2018-01-27 11:15Z" --altitude_deltas="-2000,0,2000"
+$ python3 predict.py --latitude=-34.9499 --longitude=138.5194 -a 5 -d 7.5 -b 26000 --time "2018-01-27 11:15Z" --altitude_deltas="-2000,0,2000"
 Running using GFS Model: gfs20180127-00z
 2018-01-27T11:15:00+00:00 5.0/24000.0/7.5 - Landing: -34.8585, 138.9600 at 2018-01-27T13:03:33
 2018-01-27T11:15:00+00:00 5.0/26000.0/7.5 - Landing: -34.8587, 138.8870 at 2018-01-27T13:11:01
