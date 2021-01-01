@@ -3,20 +3,26 @@ This is a semi-fork of the [CUSF Standalone Predictor](https://github.com/jonsow
 
 2018-02 Update: Wind downloader updated to use the [NOMADS GRIB Filter](http://nomads.ncep.noaa.gov/txt_descriptions/grib_filter_doc.shtml), as the OpenDAP interface stopped working. As such, we no longer require PyDAP, but we do now require GDAL to read in the GRIB2 files.
 
-## 1. Install the Python Wrapper
-Clone this repository with:
+## 1. Dependencies
+On a Raspbian/Ubuntu/Debian system, you can get most of the required dependencies using:
 ```
-$ git clone https://github.com/darksidelemm/cusf_predictor_wrapper.git
+$ sudo apt-get install git python3-numpy python3-requests python3-dateutil python3-pip python3-gdal
 ```
 
-The wind data downloader script depends on python-gdal, which needs gdal installed.
-GDAL may need to be installed separately using the system package manager, for example:
+The wind data downloader script depends on python3-gdal, which needs gdal installed. If running a debian-based system, this was just installed above.
+
+On other OSes, GDAL may need to be installed separately using the system package manager, for example:
 ```
-Debian/Ubuntu: apt-get install python3-gdal
 OSX (Macports): port install gdal +grib
 Windows (Anaconda Python): conda install gdal
 ```
 Note that on Windows you also need to install the [Visual C++ 2008 Redistributable](https://www.microsoft.com/en-us/download/details.aspx?id=26368&ranMID=24542&ranEAID=TnL5HPStwNw&ranSiteID=TnL5HPStwNw-LlmdBk4XVrcPuOVDR8ONKA&tduid=(01174a65b485bdf3885d3de68395d4e3)(256380)(2459594)(TnL5HPStwNw-LlmdBk4XVrcPuOVDR8ONKA)()) for GDAL to import in Python correctly.
+
+## 2. Install the Python Wrapper
+Clone this repository with:
+```
+$ git clone https://github.com/darksidelemm/cusf_predictor_wrapper.git
+```
 
 The custpredict python package can then be installed in the usual Python way:
 ```
@@ -30,8 +36,9 @@ This should grab the other required Python dependencies, but if not, they are:
  * fastkml
  * python-gdal (which may have been installed via apt-get previously)
 
+Note that pip3 installes shapely, it may throw some errors about not finding `geos_c.h`. These can be ignored.
 
-## 2. Building the Predictor
+## 3. Building the Predictor
 The predictor itself is a binary ('pred'), which we (currently) build seperately, using CMake.
 You may need to install `cmake` and `libglib2.0-dev` via your package manager before building, i.e.
 ```
@@ -61,7 +68,7 @@ $ cp pred ~/chasemapper/
 A pre-compiled Windows binary of the predictor is available here: http://rfhead.net/horus/cusf_standalone_predictor.zip
 Use at your own risk!
 
-## 3. Getting Wind Data
+## 4. Getting Wind Data
 The predictor binary uses a custom wind data format, extracted from NOAA's Global Forecast System wind models. The `get_wind_data.py` Python script pulls down and formats the relevant data from NOAA's [NOMADS](http://nomads.ncep.noaa.gov) server.
 
 An example of running `get_wind_data.py` is as follows:
@@ -95,7 +102,7 @@ The higher resolution wind model you choose, the larger the amount of data to do
 
 New wind models become available approximately every 6 hours, approximately 4 hours after the model's nominal time (i.e. the 00Z model becomes available around 04Z). Information on the status of the GFS model generation is available here: http://www.nco.ncep.noaa.gov/pmb/nwprod/prodstat_new/
 
-## 4. Using the Predictor
+## 5. Using the Predictor
 
 The basic usage of the predictor is as follows:
 ```
