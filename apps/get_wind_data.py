@@ -2,7 +2,7 @@
 #
 #   Project Horus 
 #   CUSF Standalone Predictor Python Wrapper - GRIB Downloader & Parser
-#   Copyright 2018 Mark Jessop <vk5qi@rfhead.net>
+#   Copyright 2020 Mark Jessop <vk5qi@rfhead.net>
 #
 #   Download GRIB files and convert them to predict-compatible GFS files.
 #
@@ -21,7 +21,12 @@ import logging
 import datetime
 import time
 import numpy as np
-from osgeo import gdal
+import xarray as xr
+
+try:
+    import cfgrib
+except ImportError:
+    print("cfgrib not installed! Check setup instructions...")
 
 # GRIB Filter URL
 GRIB_FILTER_URL = "http://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_%s.pl"
@@ -241,69 +246,45 @@ def download_grib(url, params, filename="temp.grib"):
     return False
 
 
-# Functions to parse GRIB data using GDAL
-
 def parse_grib_to_dict(gribfile):
     ''' Parse a GRIB file into a python dictionary format '''
 
-    _grib = gdal.Open(gribfile)
+    _grib = xr.open_dataset(gribfile, engine='cfgrib')
 
     output = {}
 
     try:
-        # Extract coordinate extents from the GRIB
-        _grib_geotransform = _grib.GetGeoTransform()
-        _grib_Xres = _grib_geotransform[1]
-        _grib_Xsize = _grib.RasterXSize
-        _grib_Yres = _grib_geotransform[5]
-        _grib_Ysize = _grib.RasterYSize
-        _grib_topLeftX = _grib_geotransform[0]+_grib_Xres/2.0
-        _grib_topLeftY = _grib_geotransform[3]+_grib_Yres/2.0
-        _grib_topRightX = _grib_topLeftX + _grib_Xsize*_grib_Xres
-        _grib_bottomLeftY = _grib_topLeftY + _grib_Ysize*_grib_Yres
-        # Generate arrays containing the lat/lon scales
-        _grib_Xscale = np.arange(_grib_topLeftX, _grib_topRightX, _grib_Xres)
-        _grib_Yscale = np.arange(_grib_topLeftY, _grib_bottomLeftY, _grib_Yres)
-
-        # Copy the variables we will need later to the output dictionary
-        output['lon_scale'] = _grib_Xscale
-        output['lat_scale'] = _grib_Yscale
-        output['lon_centre'] = _grib_Xscale[_grib_Xsize//2]
-        output['lat_centre'] = _grib_Yscale[_grib_Ysize//2]
-        output['lon_radius'] = (max(_grib_Xscale) - min(_grib_Xscale))/2.0
-        output['lat_radius'] = (max(_grib_Yscale) - min(_grib_Yscale))/2.0
+        # Extract coordinate scales.
+        output['lon_scale'] = _grib['longitude'].data
+        output['lat_scale'] = _grib['latitude'].data
+        output['iso_scale'] = _grib['isobaricInhPa'].data
+        output['lon_centre'] = output['lon_scale'][len(output['lon_scale'])//2]
+        output['lat_centre'] = output['lat_scale'][len(output['lat_scale'])//2]
+        output['lon_radius'] = (max(output['lon_scale']) - min(output['lon_scale']))/2.0
+        output['lat_radius'] = (max(output['lat_scale']) - min(output['lat_scale']))/2.0
+        # Extract time.
+        output['valid_time'] = int(_grib['valid_time'].data)//1000000000
 
     except:
         traceback.print_exc()
         return None
 
-    # Iterate over all the rasters (GRIB messages) within the file, and 
-    # if they contain data we need, copy the data into the output dictionary.
-    for _n in range(1,_grib.RasterCount+1):
+    # Extract the rasters layers we need
+    for _n in range(len(output['iso_scale'])):
         try:
-            _band = _grib.GetRasterBand(_n)
-            _metadata = _band.GetMetadata()
-
-            _level = _metadata['GRIB_SHORT_NAME']
-            _level_int = int(_level.split('-')[0])//100
-
+            _level_int = int(output['iso_scale'][_n])
 
             if _level_int not in output.keys():
                 output[_level_int] = {}
-
-            _variable = _metadata['GRIB_ELEMENT']
-
-            if _variable in GFS_PARAMS:
-                output[_level_int][_variable] = _band.ReadAsArray()
-                _valid_time = int(_metadata['GRIB_VALID_TIME'].split('sec')[0].strip())
-                output['valid_time'] = _valid_time
-
+            
+            output[_level_int]['HGT'] = _grib['gh'][_n].data
+            output[_level_int]['VGRD'] = _grib['v'][_n].data
+            output[_level_int]['UGRD'] = _grib['u'][_n].data
         except:
             traceback.print_exc()
             continue
 
     return output
-
 
 
 def wind_dict_to_cusf(data, output_dir='./gfs/'):
@@ -491,7 +472,9 @@ if __name__ == '__main__':
         # Now process the 
         logging.info("Processing GRIB file...")
         _wind = parse_grib_to_dict(os.path.join(_temp_dir, 'temp.grib'))
+        # Remove GRIB and index file.
         remove(os.path.join(_temp_dir, 'temp.grib'))
+        remove(os.path.join(_temp_dir, 'temp.grib.90c91.idx'))
 
         if _wind is not None:
             (_filename, _text) = wind_dict_to_cusf(_wind, output_dir=_temp_dir)
