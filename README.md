@@ -6,17 +6,8 @@ This is a semi-fork of the [CUSF Standalone Predictor](https://github.com/jonsow
 ## 1. Dependencies
 On a Raspbian/Ubuntu/Debian system, you can get most of the required dependencies using:
 ```
-$ sudo apt-get install git python3-numpy python3-requests python3-dateutil python3-pip python3-gdal
+$ sudo apt-get install git cmake build-essential libglib2.0-dev python3-numpy python3-requests python3-dateutil python3-pip libeccodes-data libeccodes0
 ```
-
-The wind data downloader script depends on python3-gdal, which needs gdal installed. If running a debian-based system, this was just installed above.
-
-On other OSes, GDAL may need to be installed separately using the system package manager, for example:
-```
-OSX (Macports): port install gdal +grib
-Windows (Anaconda Python): conda install gdal
-```
-Note that on Windows you also need to install the [Visual C++ 2008 Redistributable](https://www.microsoft.com/en-us/download/details.aspx?id=26368&ranMID=24542&ranEAID=TnL5HPStwNw&ranSiteID=TnL5HPStwNw-LlmdBk4XVrcPuOVDR8ONKA&tduid=(01174a65b485bdf3885d3de68395d4e3)(256380)(2459594)(TnL5HPStwNw-LlmdBk4XVrcPuOVDR8ONKA)()) for GDAL to import in Python correctly.
 
 ## 2. Install the Python Wrapper
 Clone this repository with:
@@ -38,14 +29,10 @@ This should grab the other required Python dependencies, but if not, they are:
 
 Note that pip3 installes shapely, it may throw some errors about not finding `geos_c.h`. These can be ignored.
 
-## 3. Building the Predictor
+## 3. Building the Predictor Binary
 The predictor itself is a binary ('pred'), which we (currently) build seperately, using CMake.
-You may need to install `cmake` and `libglib2.0-dev` via your package manager before building, i.e.
-```
-$ sudo apt-get install cmake libglib2.0-dev
-```
 
-Then, from within the cusf_predictor_wrapper directory, run the following to build the predictor binary:
+From within the cusf_predictor_wrapper directory, run the following to build the predictor binary:
 
 ```
 $ cd src
@@ -60,6 +47,7 @@ The `pred` binary then needs to be copied into the 'apps' directory, or somewher
 ```
 $ cp pred ../../apps/
 ```
+
 If you are building this utility for use with chasemapper, then you should copy `pred` into the chasemapper directory:
 ```
 $ cp pred ~/chasemapper/
@@ -73,7 +61,7 @@ The predictor binary uses a custom wind data format, extracted from NOAA's Globa
 
 An example of running `get_wind_data.py` is as follows:
 ```
-$ python3 get_wind_data.py --lat=-33 --lon=139 --latdelta=10 --londelta=10 -f 24 -m 0p50 -o gfs
+$ python3 -m cusfpredict.gfs --lat=-33 --lon=139 --latdelta=10 --londelta=10 -f 24 -m 0p50 -o gfs
 ```
 The command line arguments are as follows:
 ```

@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "cusfpredict"
+version = "0.1.0"
+description = "CUSF Predictor Wrapper & GFS Downloader"
+authors = ["Mark Jessop"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+fastkml = "^0.11"
+requests = "^2.25.1"
+numpy = "^1.17"
+pytz = "^2020.5"
+shapely = "^1.7.1"
+python-dateutil = "^2.8.1"
+xarray = "^0.16.2"
+cfgrib = "^0.9.8"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["setuptools","poetry>=0.12"]
+build-backend = "poetry.masonry.api"

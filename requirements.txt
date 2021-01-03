@@ -1,0 +1,8 @@
+fastkml
+requests
+numpy
+pytz
+shapely
+python-dateutil
+xarray
+cfgrib>=0.9.8
