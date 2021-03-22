@@ -94,7 +94,7 @@ def generate_filter_request(model='0p25_1hr',
 
     _filter_params = {}
     _filter_params['file'] = VALID_MODELS[model]['model_file'] % (_model_hour, model.split('_')[0], forecast_time)
-    _filter_params['dir'] = "/gfs.%s" % (_model_timestring)
+    _filter_params['dir'] = "/gfs.%s/atmos" % (_model_timestring)
     _filter_params['subregion'] = ''
     # TODO: Fix this to handle borders at -180 degrees properly.
     _filter_params['leftlon'] = max(-180, int(lon - londelta))
