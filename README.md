@@ -69,12 +69,13 @@ Use at your own risk!
 
 
 ## 5. Getting Wind Data
-The predictor binary uses a custom wind data format, extracted from NOAA's Global Forecast System wind models. The `get_wind_data.py` Python script pulls down and formats the relevant data from NOAA's [NOMADS](http://nomads.ncep.noaa.gov) server.
+The predictor binary uses a custom wind data format, extracted from NOAA's Global Forecast System wind models. The `cusfpredict.gfs` Python module pulls down and formats the relevant data from NOAA's [NOMADS](http://nomads.ncep.noaa.gov) server.
 
-An example of running `get_wind_data.py` is as follows:
+An example of running it is as follows:
 ```
 $ python3 -m cusfpredict.gfs --lat=-33 --lon=139 --latdelta=10 --londelta=10 -f 24 -m 0p50 -o gfs
 ```
+
 The command line arguments are as follows:
 ```
 Area of interest:
@@ -103,8 +104,7 @@ The higher resolution wind model you choose, the larger the amount of data to do
 New wind models become available approximately every 6 hours, approximately 4 hours after the model's nominal time (i.e. the 00Z model becomes available around 04Z). Information on the status of the GFS model generation is available here: http://www.nco.ncep.noaa.gov/pmb/nwprod/prodstat_new/
 
 ## 5. Using the Predictor
-
-The basic usage of the predictor is as follows:
+The basic usage of the predictor from within Python is as follows:
 ```
 import datetime
 from cusfpredict.predict import Predictor
