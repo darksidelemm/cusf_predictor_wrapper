@@ -71,6 +71,8 @@ Use at your own risk!
 ## 5. Getting Wind Data
 The predictor binary uses a custom wind data format, extracted from NOAA's Global Forecast System wind models. The `cusfpredict.gfs` Python module pulls down and formats the relevant data from NOAA's [NOMADS](http://nomads.ncep.noaa.gov) server.
 
+If you are using this library with ChaseMapper, you will need to adjust the download command in the [chasemapper configuration file](https://github.com/projecthorus/chasemapper/blob/master/horusmapper.cfg.example#L135).
+
 An example of running it is as follows:
 ```
 $ python3 -m cusfpredict.gfs --lat=-33 --lon=139 --latdelta=10 --londelta=10 -f 24 -m 0p50 -o gfs
@@ -104,6 +106,8 @@ The higher resolution wind model you choose, the larger the amount of data to do
 New wind models become available approximately every 6 hours, approximately 4 hours after the model's nominal time (i.e. the 00Z model becomes available around 04Z). Information on the status of the GFS model generation is available here: http://www.nco.ncep.noaa.gov/pmb/nwprod/prodstat_new/
 
 ## 5. Using the Predictor
+(Note: This section is intended for users within to run predictions from within their own software. If you are just installing this library for use with chasemapper, you can skip all of this!)
+
 The basic usage of the predictor from within Python is as follows:
 ```
 import datetime
