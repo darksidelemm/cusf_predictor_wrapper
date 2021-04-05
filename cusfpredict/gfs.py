@@ -27,6 +27,7 @@ try:
     import cfgrib
 except ImportError:
     print("xarray and/or cfgrib not installed! Check setup instructions...")
+    sys.exit(1)
 
 # GRIB Filter URL
 GRIB_FILTER_URL = "http://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_%s.pl"
@@ -401,7 +402,7 @@ def remove_dir_contents(_dir):
         except Exception as e:
             print(e)
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--age', type=int, default=0, help="Age of the model to grab, in blocks of 6 hours.")
     parser.add_argument('-f', '--future', type=int, default=48, help="window of time to save data is at most HOURS hours in future.")
@@ -503,3 +504,5 @@ if __name__ == '__main__':
     logging.info("Finished!")
 
 
+if __name__ == '__main__':
+    main()

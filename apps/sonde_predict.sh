@@ -40,7 +40,7 @@ rm gfs/*.dat
 
 # Download the wind data.
 # Note that this will wait up to 3 hours for the latest wind data to become available.
-python3 get_wind_data.py --lat=$HOME_LAT --lon=$HOME_LON --latdelta=$LATLON_DELTA --londelta=$LATLON_DELTA -f $HOUR_RANGE -m 0p25_1hr --wait=180 2>&1 | tee sonde_predict.log 
+python3 -m cusfpredict.gfs --lat=$HOME_LAT --lon=$HOME_LON --latdelta=$LATLON_DELTA --londelta=$LATLON_DELTA -f $HOUR_RANGE -m 0p25_1hr --wait=180 2>&1 | tee sonde_predict.log 
 
 # Run predictions
 python3 sonde_predict.py
