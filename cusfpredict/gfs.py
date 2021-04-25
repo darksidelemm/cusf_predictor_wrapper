@@ -10,6 +10,7 @@
 #    [ ] Use HTTP Range requests instead of using the GRIB filter.
 #
 import sys
+import glob
 import os.path
 from os import remove
 import shutil
@@ -475,7 +476,8 @@ def main():
         _wind = parse_grib_to_dict(os.path.join(_temp_dir, 'temp.grib'))
         # Remove GRIB and index file.
         remove(os.path.join(_temp_dir, 'temp.grib'))
-        remove(os.path.join(_temp_dir, 'temp.grib.90c91.idx'))
+        for _entry in glob.glob(os.path.join(_temp_dir, "*.idx")):
+            remove(_entry)
 
         if _wind is not None:
             (_filename, _text) = wind_dict_to_cusf(_wind, output_dir=_temp_dir)

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cusfpredict"
-version = "0.2.0"
+version = "0.2.1"
 description = "CUSF Predictor Wrapper & GFS Downloader"
 authors = ["Mark Jessop"]
 
