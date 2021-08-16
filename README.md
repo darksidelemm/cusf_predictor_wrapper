@@ -8,7 +8,7 @@ This is a semi-fork of the [CUSF Standalone Predictor](https://github.com/jonsow
 ## 1. Dependencies
 On a Raspbian/Ubuntu/Debian system, you can get most of the required dependencies using:
 ```
-$ sudo apt-get install git cmake build-essential libglib2.0-dev python3-numpy python3-requests python3-dateutil python3-pip libeccodes-data libeccodes0
+$ sudo apt-get install git cmake build-essential libglib2.0-dev python3-numpy python3-requests python3-dateutil python3-pip libeccodes-data libeccodes0 libgeos-dev libatlas-base-dev
 ```
 
 ## 2. Download this Repository
