@@ -57,7 +57,7 @@ parser.add_argument('--time', type=str, default=LAUNCH_TIME, help="First Time of
 # parser.add_argument('--step', type=int, default=LAUNCH_STEP, help="Time step between predictions (Hours). Default = %d" % LAUNCH_STEP)
 parser.add_argument('--limit', type=int, default=LAUNCH_TIME_LIMIT, help="Predict up to this many hours into the future. Default = %d" % LAUNCH_TIME_LIMIT)
 parser.add_argument('-s', '--site', type=str, default="Radiosonde", help="Launch site name. Default: Radiosonde")
-parser.add_argument('-o', '--output', type=str, default='Meppen_predictions', help="Output JSON File. .json will be appended. Default = sonde_predictions[.json]")
+parser.add_argument('-o', '--output', type=str, default='meppen_predictions', help="Output JSON File. .json will be appended. Default = sonde_predictions[.json]")
 args = parser.parse_args()
 
 OUTPUT_FILE = args.output
@@ -115,24 +115,24 @@ for _delta_datum in range (0, LAUNCH_TIME_LIMIT, 24): # this limits the time to 
 
             # If we only get a single entry in the output array, it means we don't have any wind data for this time
             # Continue on to the next launch time.
-            if len(flight_path) == 1:
-                continue
+                if len(flight_path) == 1:
+                    continue
 
             # Generate a descriptive comment for the track and placemark.
-            pred_time_string = _lunch_time.strftime("%Y%m%d-%H%M")
-            pred_comment = "%s %.1f/%.1f/%.1f" % (pred_time_string, ASCENT_RATE, BURST_ALT, DESCENT_RATE)
+                pred_time_string = _lunch_time.strftime("%Y%m%d-%H%M")
+                pred_comment = "%s %.1f/%.1f/%.1f" % (pred_time_string, ASCENT_RATE, BURST_ALT, DESCENT_RATE)
 
             # Add the track and placemark to our list of predictions
-            predictions.append(flight_path_to_geometry(flight_path, comment=pred_comment))
-            predictions.append(flight_path_landing_placemark(flight_path, comment=pred_comment))
+                predictions.append(flight_path_to_geometry(flight_path, comment=pred_comment))
+                predictions.append(flight_path_landing_placemark(flight_path, comment=pred_comment))
 
-            json_out['predictions'][pred_comment] = {
-                'timestamp': _lunch_time.strftime("%Y-%m-%d %H:%M:%S"),
-                'path':flight_path_to_polyline(flight_path),
-                'burst_alt': BURST_ALT
-            }
+                json_out['predictions'][pred_comment] = {
+                    'timestamp': _lunch_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    'path':flight_path_to_polyline(flight_path),
+                    'burst_alt': BURST_ALT
+                }
 
-            print("Prediction Run: %s" % pred_comment)
+                print("Prediction Run: %s" % pred_comment)
 
             
 # Write out the prediction data to the KML file
