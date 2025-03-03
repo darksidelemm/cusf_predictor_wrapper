@@ -5,10 +5,10 @@ description = "CUSF Predictor Wrapper & GFS Downloader"
 authors = ["Mark Jessop"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 fastkml = "^1.1.0"
 requests = "^2.25.1"
-numpy = "^1.17"
+numpy = "^2.2.3"
 pytz = "^2020.5"
 shapely = "^2.0.7"
 python-dateutil = "^2.8.1"
