@@ -5,17 +5,15 @@ description = "CUSF Predictor Wrapper & GFS Downloader"
 authors = ["Mark Jessop"]
 
 [tool.poetry.dependencies]
-python = "^3.6"
-fastkml = "^0.11"
+python = "^3.9"            # last actively maintained version of Python
+fastkml = "^1"
 requests = "^2.25.1"
-numpy = "^1.17"
-pytz = "^2020.5"
-shapely = "^1.7.1"
+numpy = "^2.0.0"
+pytz = "^2025.1"
+shapely = "^2.0.0"
 python-dateutil = "^2.8.1"
-xarray = "^0.16.2"
+xarray = "*"
 cfgrib = "^0.9.8"
-
-[tool.poetry.dev-dependencies]
 
 [build-system]
 requires = ["setuptools", "poetry>=0.12"]
