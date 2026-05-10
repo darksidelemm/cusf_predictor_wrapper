@@ -31,6 +31,7 @@ if __name__ == "__main__":
         name="cusfpredict",
         description="Python Wrapper for the CUSF High-Altitude Balloon Predictor",
         long_description=readme,
+        long_description_content_type="text/markdown",
         version=version,
         install_requires=requirements,
         keywords=["horus balloon prediction gfs"],
