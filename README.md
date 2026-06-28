@@ -22,23 +22,17 @@ $ git clone https://github.com/darksidelemm/cusf_predictor_wrapper.git
 ### Using Pip (Preferred)
 The easiest way to install the python wrapper is via pip:
 ```
-$ sudo pip3 install cusfpredict
+$ sudo pip install cusfpredict
 ```
-(Replace pip3 with pip if necessary on your system, however note that Python 2 is *not supported!*)
 
 ### From Source (If Necessary)
 If you couldn't install from pip for whatever reason, then the cusfpredict python package can then be installed in the usual Python way:
 ```
 $ cd cusf_predictor_wrapper
-$ sudo python3 setup.py install
+$ sudo pip install . --break-system-packages
 ```
 
-This should grab the other required Python dependencies, but if not, they are available in requirements.txt and can be preinstalled using
-```
-$ sudo pip3 install -r requirements.txt
-```
-
-Note that as pip3 installes shapely, it may throw some errors about not finding `geos_c.h`. These can be ignored.
+Note that as pip installes shapely, it may throw some errors about not finding `geos_c.h`. These can be ignored.
 
 
 ## 4. Building the Predictor Binary
