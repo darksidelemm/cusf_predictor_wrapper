@@ -1,8 +1,8 @@
-fastkml
+fastkml>=1.0
 requests
 numpy
 pytz
-shapely
+shapely>=2.0
 python-dateutil
 xarray
 cfgrib>=0.9.8

@@ -5,9 +5,12 @@
 #   Copyright 2017 Mark Jessop <vk5qi@rfhead.net>
 #
 import fastkml
+import fastkml.styles
 import glob
 import datetime
 import os.path
+from fastkml.geometry import create_kml_geometry
+from fastkml.enums import AltitudeMode
 from shapely.geometry import Point, LineString
 
 def available_gfs(gfs_path='./gfs'):
@@ -103,14 +106,12 @@ def flight_path_to_geometry(flight_path,
         ns=ns,
         id=name,
         name=comment,
-        styles=[flight_track_style])
-
-    flight_line.geometry = fastkml.geometry.Geometry(
-        ns=ns,
-        geometry=flight_path_to_linestring(flight_path),
-        altitude_mode=altitude_mode,
-        extrude=True,
-        tessellate=True)
+        styles=[flight_track_style],
+        kml_geometry=create_kml_geometry(
+            flight_path_to_linestring(flight_path),
+            altitude_mode=AltitudeMode(altitude_mode),
+            extrude=True,
+            tessellate=True))
 
     return flight_line
 
@@ -121,8 +122,8 @@ def flight_path_landing_placemark(flight_path,
     """ Produce a placemark of the landing position of a flight """
 
     flight_icon_style = fastkml.styles.IconStyle(
-        ns=ns, 
-        icon_href="http://maps.google.com/mapfiles/kml/shapes/cross-hairs.png", 
+        ns=ns,
+        icon_href="http://maps.google.com/mapfiles/kml/shapes/cross-hairs.png",
         scale=2.0)
 
     flight_style = fastkml.styles.Style(
@@ -130,16 +131,14 @@ def flight_path_landing_placemark(flight_path,
         styles=[flight_icon_style])
 
     flight_placemark = fastkml.kml.Placemark(
-        ns=ns, 
+        ns=ns,
         id=name,
         name=comment,
         description="",
-        styles=[flight_style])
-
-    flight_placemark.geometry = fastkml.geometry.Geometry(
-        ns=ns,
-        geometry=Point(flight_path[-1][2], flight_path[-1][1], flight_path[-1][3]),
-        altitude_mode='clampToGround')
+        styles=[flight_style],
+        kml_geometry=create_kml_geometry(
+            Point(flight_path[-1][2], flight_path[-1][1], flight_path[-1][3]),
+            altitude_mode=AltitudeMode.clamp_to_ground))
 
     return flight_placemark
 
@@ -151,20 +150,13 @@ def flight_path_burst_placemark(flight_path,
     """ Produce a placemark of the burst position of a flight """
 
     flight_icon_style = fastkml.styles.IconStyle(
-        ns=ns, 
-        icon_href="http://maps.google.com/mapfiles/kml/shapes/star.png", 
+        ns=ns,
+        icon_href="http://maps.google.com/mapfiles/kml/shapes/star.png",
         scale=2.0)
 
     flight_style = fastkml.styles.Style(
         ns=ns,
         styles=[flight_icon_style])
-
-    flight_placemark = fastkml.kml.Placemark(
-        ns=ns, 
-        id=name,
-        name=comment,
-        description="",
-        styles=[flight_style])
 
     # Read through array and hunt for max altitude point.
     current_alt = 0.0
@@ -174,11 +166,15 @@ def flight_path_burst_placemark(flight_path,
             current_alt = flight_path[i][3]
             current_index = i
 
-
-    flight_placemark.geometry = fastkml.geometry.Geometry(
+    flight_placemark = fastkml.kml.Placemark(
         ns=ns,
-        geometry=Point(flight_path[current_index][2], flight_path[current_index][1], flight_path[current_index][3]),
-        altitude_mode=altitude_mode)
+        id=name,
+        name=comment,
+        description="",
+        styles=[flight_style],
+        kml_geometry=create_kml_geometry(
+            Point(flight_path[current_index][2], flight_path[current_index][1], flight_path[current_index][3]),
+            altitude_mode=AltitudeMode(altitude_mode)))
 
     return flight_placemark
 
