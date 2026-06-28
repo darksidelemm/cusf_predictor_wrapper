@@ -5,6 +5,8 @@ This is a semi-fork of the [CUSF Standalone Predictor](https://github.com/jonsow
 
 2021-03 Update: We have dropped GDAL in favour of cfgrib. 
 
+2026-06 Update: A range of updates for support of newer libraries (e.g. numpy, fastkml), and better packaging. The minimum supported Python version is now 3.9.
+
 ## 1. System Dependencies
 The Python package installs its Python dependencies automatically. You still need the system libraries used by the wind-data reader and the standalone C predictor.
 
@@ -31,7 +33,7 @@ $ python -m pip install cusfpredict
 
 Python 2 is not supported.
 
-### From Source, Editable Mode
+### From Source, Editable Mode (Only required if you are experimenting with changes in this library)
 For development, clone this repository and install it in editable mode:
 ```
 $ git clone https://github.com/darksidelemm/cusf_predictor_wrapper.git
