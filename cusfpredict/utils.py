@@ -10,6 +10,11 @@ import datetime
 import os.path
 from shapely.geometry import Point, LineString
 
+try:
+    from fastkml.enums import AltitudeMode
+except ImportError:
+    AltitudeMode = None
+
 def available_gfs(gfs_path='./gfs'):
     """ Determine the time extent of the GFS dataset """
 
@@ -30,8 +35,8 @@ def available_gfs(gfs_path='./gfs'):
 
     _timestamps.sort()
 
-    start_time = datetime.datetime.utcfromtimestamp(_timestamps[0])
-    end_time = datetime.datetime.utcfromtimestamp(_timestamps[-1])
+    start_time = datetime.datetime.fromtimestamp(_timestamps[0], datetime.timezone.utc)
+    end_time = datetime.datetime.fromtimestamp(_timestamps[-1], datetime.timezone.utc)
 
     return (start_time, end_time)
 
@@ -55,6 +60,38 @@ def gfs_model_age(gfs_path="./gfs"):
 
 # Geometry and KML related stuff
 ns = '{http://www.opengis.net/kml/2.2}'
+
+def _kml_altitude_mode(altitude_mode):
+    """Return an altitude mode value compatible with the installed fastkml."""
+
+    if AltitudeMode is None or not isinstance(altitude_mode, str):
+        return altitude_mode
+
+    for mode in AltitudeMode:
+        if altitude_mode in (mode.name, mode.value):
+            return mode
+
+    return altitude_mode
+
+
+def _kml_geometry(geometry, **kwargs):
+    """Create a fastkml geometry across old and new fastkml APIs."""
+
+    if hasattr(fastkml.geometry, "create_kml_geometry"):
+        if "altitude_mode" in kwargs:
+            kwargs["altitude_mode"] = _kml_altitude_mode(kwargs["altitude_mode"])
+        return fastkml.geometry.create_kml_geometry(geometry, ns=ns, **kwargs)
+
+    return fastkml.geometry.Geometry(ns=ns, geometry=geometry, **kwargs)
+
+
+def _set_placemark_geometry(placemark, geometry, **kwargs):
+    kml_geometry = _kml_geometry(geometry, **kwargs)
+
+    if hasattr(fastkml.geometry, "create_kml_geometry"):
+        placemark.kml_geometry = kml_geometry
+    else:
+        placemark.geometry = kml_geometry
 
 def flight_path_to_linestring(flight_path):
     ''' Convert a predicted flight path to a LineString geometry object '''
@@ -105,9 +142,9 @@ def flight_path_to_geometry(flight_path,
         name=comment,
         styles=[flight_track_style])
 
-    flight_line.geometry = fastkml.geometry.Geometry(
-        ns=ns,
-        geometry=flight_path_to_linestring(flight_path),
+    _set_placemark_geometry(
+        flight_line,
+        flight_path_to_linestring(flight_path),
         altitude_mode=altitude_mode,
         extrude=True,
         tessellate=True)
@@ -136,9 +173,9 @@ def flight_path_landing_placemark(flight_path,
         description="",
         styles=[flight_style])
 
-    flight_placemark.geometry = fastkml.geometry.Geometry(
-        ns=ns,
-        geometry=Point(flight_path[-1][2], flight_path[-1][1], flight_path[-1][3]),
+    _set_placemark_geometry(
+        flight_placemark,
+        Point(flight_path[-1][2], flight_path[-1][1], flight_path[-1][3]),
         altitude_mode='clampToGround')
 
     return flight_placemark
@@ -175,9 +212,9 @@ def flight_path_burst_placemark(flight_path,
             current_index = i
 
 
-    flight_placemark.geometry = fastkml.geometry.Geometry(
-        ns=ns,
-        geometry=Point(flight_path[current_index][2], flight_path[current_index][1], flight_path[current_index][3]),
+    _set_placemark_geometry(
+        flight_placemark,
+        Point(flight_path[current_index][2], flight_path[current_index][1], flight_path[current_index][3]),
         altitude_mode=altitude_mode)
 
     return flight_placemark
@@ -200,8 +237,10 @@ def write_flight_path_kml(flight_data,
     for _flight in flight_data:
         kml_doc.append(_flight)
 
+    kml_root.append(kml_doc)
+
     with open(filename,'w') as kml_file:
-        kml_str = kml_doc.to_string()
+        kml_str = kml_root.to_string()
         if kml_hack:
             kml_str = kml_str.replace('kml:','').replace(':kml','')
         kml_file.write(kml_str)

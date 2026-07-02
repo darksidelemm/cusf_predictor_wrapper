@@ -2,6 +2,10 @@
 #
 # Original version: Rich Wareham <rjw57@cam.ac.uk>
 
+cmake_minimum_required(VERSION 3.10)
+
+project(cusf_standalone_predictor C)
+
 # Use PkgConfig to find the glib libraries
 find_package(PkgConfig)
 

@@ -5,70 +5,83 @@ This is a semi-fork of the [CUSF Standalone Predictor](https://github.com/jonsow
 
 2021-03 Update: We have dropped GDAL in favour of cfgrib. 
 
-## 1. Dependencies
+2026-06 Update: A range of updates for support of newer libraries (e.g. numpy, fastkml), and better packaging. The minimum supported Python version is now 3.9.
+
+## 1. System Dependencies
+The Python package installs its Python dependencies automatically. You still need the system libraries used by the wind-data reader and the standalone C predictor.
+
 On a Raspbian/Ubuntu/Debian system, you can get most of the required dependencies using:
 ```
 $ sudo apt-get install git cmake build-essential libglib2.0-dev python3-numpy python3-requests python3-dateutil python3-pip libeccodes-data libeccodes0 libgeos-dev libatlas-base-dev
 ```
 
-## 2. Download this Repository
-Clone this repository with:
+On macOS with Homebrew:
+```
+$ brew install cmake glib eccodes geos
+```
+
+## 2. Install the Python Wrapper
+
+### From PyPI
+Install into a virtual environment:
+```
+$ python3 -m venv venv
+$ source venv/bin/activate
+$ python -m pip install --upgrade pip
+$ python -m pip install cusfpredict
+```
+
+Python 2 is not supported.
+
+### From Source, Editable Mode (Only required if you are experimenting with changes in this library)
+For development, clone this repository and install it in editable mode:
 ```
 $ git clone https://github.com/darksidelemm/cusf_predictor_wrapper.git
-```
-
-## 3. Install the Python Wrapper
-
-### Using Pip (Preferred)
-The easiest way to install the python wrapper is via pip:
-```
-$ sudo pip3 install cusfpredict
-```
-(Replace pip3 with pip if necessary on your system, however note that Python 2 is *not supported!*)
-
-### From Source (If Necessary)
-If you couldn't install from pip for whatever reason, then the cusfpredict python package can then be installed in the usual Python way:
-```
 $ cd cusf_predictor_wrapper
-$ sudo python3 setup.py install
+$ python3 -m venv venv
+$ source venv/bin/activate
+$ python -m pip install --upgrade pip
+$ python -m pip install -e .
 ```
 
-This should grab the other required Python dependencies, but if not, they are available in requirements.txt and can be preinstalled using
+If you only want to install the source checkout without editable mode, use:
 ```
-$ sudo pip3 install -r requirements.txt
+$ python -m pip install .
 ```
 
-Note that as pip3 installes shapely, it may throw some errors about not finding `geos_c.h`. These can be ignored.
+If Python dependency installation fails, the same dependencies are listed in `requirements.txt` and can be installed explicitly:
+```
+$ python -m pip install -r requirements.txt
+```
+
+The package depends on Shapely and ecCodes-backed GRIB readers. If installation fails with missing headers or missing shared libraries, install the system dependencies above and retry.
 
 
-## 4. Building the Predictor Binary
-The predictor itself is a binary ('pred'), which we (currently) build seperately, using CMake.
+## 3. Building the Predictor Binary
+The predictor itself is a binary (`pred`), which is built separately using CMake. The Python package does not currently build or install this binary for you.
 
 From within the cusf_predictor_wrapper directory, run the following to build the predictor binary:
 
 ```
-$ cd src
-$ mkdir build
-$ cd build
-$ cmake ../
-$ make
+$ cmake -S src -B src/build
+$ cmake --build src/build
 ```
 
-The `pred` binary then needs to be copied into the 'apps' directory, or somewhere else useful, i.e.
+The `pred` binary then needs to be copied somewhere useful. For the example scripts in `apps`, copy it into that directory:
 ```
-$ cp pred ../../apps/
+$ cp src/build/pred apps/
 ```
 
 If you are building this utility for use with chasemapper, then you should copy `pred` into the chasemapper directory:
 ```
-$ cp pred ~/chasemapper/
+$ cp src/build/pred ~/chasemapper/
 ```
 
 A pre-compiled Windows binary of the predictor is available here: http://rfhead.net/horus/cusf_standalone_predictor.zip
 Use at your own risk!
 
 
-## 5. Getting Wind Data
+## 4. Getting Wind Data
 The predictor binary uses a custom wind data format, extracted from NOAA's Global Forecast System wind models. The `cusfpredict.gfs` Python module pulls down and formats the relevant data from NOAA's [NOMADS](http://nomads.ncep.noaa.gov) server.
 
 If you are using this library with ChaseMapper, you will need to adjust the download command in the [chasemapper configuration file](https://github.com/projecthorus/chasemapper/blob/master/horusmapper.cfg.example#L135).
@@ -122,7 +135,7 @@ flight_path = pred.predict(
     ascent_rate=5.0,
     descent_rate=5.0,
     burst_alt=30000,
-    launch_time=datetime.datetime.utcnow()
+    launch_time=datetime.datetime.now(datetime.timezone.utc)
     )
 
 ```
@@ -180,6 +193,5 @@ KML written to prediction.kml
 A few other example scripts are located in the 'apps' directory:
  * basic_usage.py - Example showing how to write a predicted flight path out to a KML file
  * sonde_predict.py - A more complex example, where predictions for the next week's of radiosonde flights are run and written to a KML file.
-
 
 

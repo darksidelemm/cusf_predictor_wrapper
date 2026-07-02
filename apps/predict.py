@@ -20,7 +20,7 @@ PRED_BINARY = "./pred"
 GFS_PATH = "./gfs"
 
 # Launch Parameters
-LAUNCH_TIME = datetime.datetime.utcnow().isoformat() # This can be anything that dateutil can parse. The time *must* be in UTC.
+LAUNCH_TIME = datetime.datetime.now(datetime.timezone.utc).isoformat() # This can be anything that dateutil can parse. The time *must* be in UTC.
 LAUNCH_LAT = -34.9499
 LAUNCH_LON = 138.5194
 LAUNCH_ALT = 0.0
@@ -86,8 +86,7 @@ for _delta_alt in burst_alt_variations:
 		predictions.append(flight_path_burst_placemark(flight_path, comment="Burst (%dm)"%_burst_alt, altitude_mode=altitude_mode))
 		predictions.append(flight_path_landing_placemark(flight_path, comment=pred_comment))
 
-		print("%s - Landing: %.4f, %.4f at %s" % (pred_comment, flight_path[-1][1], flight_path[-1][2], datetime.datetime.utcfromtimestamp(flight_path[-1][0]).isoformat()))
+		print("%s - Landing: %.4f, %.4f at %s" % (pred_comment, flight_path[-1][1], flight_path[-1][2], datetime.datetime.fromtimestamp(flight_path[-1][0], datetime.timezone.utc).isoformat()))
 
 write_flight_path_kml(predictions, filename=args.output)
 print("KML written to %s" % args.output)
-
